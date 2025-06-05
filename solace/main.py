@@ -4,6 +4,7 @@ from .modes.chat_mode import chat, ChatLockedError
 from .logic.coder import generate_code
 from .logic.parser import parse_file
 from .logic.responder import get_response
+from .logic.converse import get_reply
 
 HELP_TEXT = """Commands:
 /mode diary   - enter diary mode
@@ -12,6 +13,7 @@ HELP_TEXT = """Commands:
 /ask <q>      - ask a coding question
 /code <task>  - generate a code snippet
 /import <f>   - import entries from file
+/chat <msg>   - quick conversation
 /help         - show this message
 /exit         - exit program
 """
@@ -54,6 +56,10 @@ def main():
         if line.startswith('/code'):
             task = line[len('/code'):].strip()
             print(generate_code(task))
+            continue
+        if line.startswith('/chat'):
+            message = line[len('/chat'):].strip()
+            print(get_reply(message))
             continue
 
         if current_mode == 'diary':

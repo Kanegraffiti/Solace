@@ -1,0 +1,12 @@
+{
+  "examples": [
+    {
+      "prompt": "how are you",
+      "response": "I'm doing well, thanks!"
+    },
+    {
+      "prompt": "tell me something interesting",
+      "response": "Did you know octopuses have three hearts?"
+    }
+  ]
+}
