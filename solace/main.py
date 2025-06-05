@@ -2,7 +2,7 @@ from .modes.diary_mode import add_entry
 from .modes.teaching_mode import add_fact, add_snippet
 from .modes.chat_mode import chat, ChatLockedError
 from .logic.coder import generate_code
-from .logic.parser import parse_file
+from .logic.importer import process_file
 from .logic.responder import get_response
 from .logic.converse import get_reply
 
@@ -12,7 +12,7 @@ HELP_TEXT = """Commands:
 /mode chat    - chat with Solace (requires 10 diary entries)
 /ask <q>      - ask a coding question
 /code <task>  - generate a code snippet
-/import <f>   - import entries from file
+/import <f>   - import facts from file
 /chat <msg>   - quick conversation
 /help         - show this message
 /exit         - exit program
@@ -45,9 +45,8 @@ def main():
             break
         if line.startswith('/import'):
             _, path = line.split(maxsplit=1)
-            for entry in parse_file(path):
-                add_entry(entry['text'])
-            print('Imported entries.')
+            count = process_file(path)
+            print(f'Imported {count} facts.')
             continue
         if line.startswith('/ask'):
             question = line[len('/ask'):].strip()
