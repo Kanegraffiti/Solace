@@ -1,16 +1,17 @@
 # Solace
 
-Solace is an offline, AI-free, terminal-based companion app designed for journaling, debugging, and personal learning. It mimics your tone, remembers what you teach it, and never uploads your data.
+Solace is an offline, AI-free, terminal-based companion app. It stores your diary entries, personal notes, and coding snippets without using any online services or language models.
 
 ## Features
-- ✍️ Diary Mode with emotion tagging
-- 📚 Teaching Mode for custom facts and learning
-- 💬 Chat Mode trained only on your writing
-- ⚙️ Pretrained coding support for Bash, Python, JS, HTML, CSS
-- 📥 Smart file import: `.json`, `.txt`, `.md`, `.rst`, `.pdf`, `.epub`
-- 🧠 Slash commands: `/ask`, `/code`, `/import`, `/exit`, etc.
+- Diary mode with emotion tagging
+- Teaching mode to store facts and code snippets
+- Chat mode that mimics your writing style (unlocked after 10 diary entries)
+- Import notes from `.txt`, `.md`, `.rst`, `.pdf`, `.epub`
+- Ask Solace coding questions or request snippets
 
-## Getting Started
+## Usage
 ```bash
 bash nltk-install.sh
 python main.py
+```
+Use `/help` inside the program to see commands.

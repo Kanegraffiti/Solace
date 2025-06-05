@@ -1,0 +1,14 @@
+{
+  "facts": {
+    "python": "Python is an interpreted language with dynamic typing.",
+    "bash": "Bash is a Unix shell and command language.",
+    "html": "HTML defines the structure of web content.",
+    "javascript": "JavaScript adds interactivity to web pages.",
+    "css": "CSS styles HTML elements."
+  },
+  "snippets": {
+    "hello python": "print('Hello, world!')",
+    "hello bash": "echo 'Hello, world!'",
+    "hello js": "console.log('Hello, world!');"
+  }
+}
