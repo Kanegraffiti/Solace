@@ -22,7 +22,7 @@ def get_reply(message: str) -> str:
     """Return a conversational reply based on keyword matching."""
     examples = _load_examples()
     if not examples:
-        return "I'm still learning. Try teaching me this in /mode teach."
+        return "I'm not sure how to respond to that, but I'm here for you."
 
     message_tokens = set(_tokenize(message))
     best_score = 0
@@ -37,4 +37,4 @@ def get_reply(message: str) -> str:
 
     if best_score > 0 and best_reply:
         return best_reply
-    return "I'm still learning. Try teaching me this in /mode teach."
+    return "I'm not sure how to respond to that, but I'm here for you."
