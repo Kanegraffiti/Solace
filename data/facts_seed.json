@@ -1,0 +1,804 @@
+{
+  "facts": [
+    {
+      "title": "HTML anchor tag",
+      "description": "Use the <a> element to create a hyperlink pointing to another resource. Include the href attribute with the target URL.",
+      "tags": [
+        "html",
+        "syntax"
+      ]
+    },
+    {
+      "title": "HTML heading levels",
+      "description": "HTML provides six levels of headings, from <h1> for the most important down to <h6> for the least important.",
+      "tags": [
+        "html",
+        "structure"
+      ]
+    },
+    {
+      "title": "HTML unordered list",
+      "description": "The <ul> element creates a bulleted list. Each list item goes inside an <li> element.",
+      "tags": [
+        "html",
+        "list"
+      ]
+    },
+    {
+      "title": "HTML semantic elements",
+      "description": "Elements like <article>, <section>, and <nav> give meaning to content and improve accessibility.",
+      "tags": [
+        "html",
+        "semantics"
+      ]
+    },
+    {
+      "title": "HTML image element",
+      "description": "Use <img> with the src attribute to embed an image. Always include alt text for accessibility.",
+      "tags": [
+        "html",
+        "media"
+      ]
+    },
+    {
+      "title": "HTML forms",
+      "description": "A form is defined using <form>. Input controls such as <input>, <textarea>, and <button> collect user data.",
+      "tags": [
+        "html",
+        "forms"
+      ]
+    },
+    {
+      "title": "HTML table structure",
+      "description": "Tables are built with <table>, containing rows <tr>, header cells <th>, and data cells <td>.",
+      "tags": [
+        "html",
+        "table"
+      ]
+    },
+    {
+      "title": "HTML meta tags",
+      "description": "Meta elements in the <head> describe the document, providing metadata such as viewport settings or descriptions.",
+      "tags": [
+        "html",
+        "metadata"
+      ]
+    },
+    {
+      "title": "HTML comments",
+      "description": "Comments are added with <!-- comment --> and are not displayed in the browser.",
+      "tags": [
+        "html",
+        "syntax"
+      ]
+    },
+    {
+      "title": "HTML character entities",
+      "description": "Entities like &amp; or &lt; represent reserved characters in HTML and ensure correct display.",
+      "tags": [
+        "html",
+        "entities"
+      ]
+    },
+    {
+      "title": "HTML5 video element",
+      "description": "The <video> tag embeds a media player for video playback with attributes like controls and autoplay.",
+      "tags": [
+        "html",
+        "media"
+      ]
+    },
+    {
+      "title": "HTML doctype",
+      "description": "<!DOCTYPE html> at the top of a document triggers standards mode in browsers.",
+      "tags": [
+        "html",
+        "syntax"
+      ]
+    },
+    {
+      "title": "HTML block vs inline",
+      "description": "Block elements occupy the full width available, while inline elements flow with surrounding text.",
+      "tags": [
+        "html",
+        "layout"
+      ]
+    },
+    {
+      "title": "HTML iframe element",
+      "description": "<iframe> embeds another HTML document within the current page.",
+      "tags": [
+        "html",
+        "embedding"
+      ]
+    },
+    {
+      "title": "HTML accessibility",
+      "description": "Use ARIA roles and proper semantic elements to make pages accessible to assistive technologies.",
+      "tags": [
+        "html",
+        "accessibility"
+      ]
+    },
+    {
+      "title": "HTML link element",
+      "description": "The <link> tag references external resources such as stylesheets. It's placed inside the <head>.",
+      "tags": [
+        "html",
+        "head"
+      ]
+    },
+    {
+      "title": "HTML description list",
+      "description": "<dl> creates a list of terms and descriptions using <dt> for the term and <dd> for the description.",
+      "tags": [
+        "html",
+        "list"
+      ]
+    },
+    {
+      "title": "HTML figure and figcaption",
+      "description": "Use <figure> with <figcaption> to associate a caption with an illustration or diagram.",
+      "tags": [
+        "html",
+        "media"
+      ]
+    },
+    {
+      "title": "HTML button types",
+      "description": "Buttons may be submit, reset, or generic button types as defined by the type attribute on <button>.",
+      "tags": [
+        "html",
+        "forms"
+      ]
+    },
+    {
+      "title": "HTML script element",
+      "description": "<script> embeds or references executable code, usually JavaScript, and may include the defer or async attributes.",
+      "tags": [
+        "html",
+        "scripting"
+      ]
+    },
+    {
+      "title": "CSS selectors",
+      "description": "Selectors target HTML elements for styling. For example, p selects all paragraphs and .class selects elements with that class.",
+      "tags": [
+        "css",
+        "selectors"
+      ]
+    },
+    {
+      "title": "CSS box model",
+      "description": "Each element is a box composed of margin, border, padding, and content areas which determine layout.",
+      "tags": [
+        "css",
+        "layout"
+      ]
+    },
+    {
+      "title": "CSS flexbox",
+      "description": "The Flexible Box Layout distributes space along a single column or row using display: flex.",
+      "tags": [
+        "css",
+        "layout"
+      ]
+    },
+    {
+      "title": "CSS grid",
+      "description": "CSS Grid Layout organizes content in two-dimensional rows and columns using display: grid.",
+      "tags": [
+        "css",
+        "layout"
+      ]
+    },
+    {
+      "title": "CSS inheritance",
+      "description": "Some properties are inherited from parent elements, affecting how styles cascade down the DOM tree.",
+      "tags": [
+        "css",
+        "cascade"
+      ]
+    },
+    {
+      "title": "CSS pseudo-classes",
+      "description": "Pseudo-classes like :hover apply styles in response to user interaction or element state.",
+      "tags": [
+        "css",
+        "selectors"
+      ]
+    },
+    {
+      "title": "CSS specificity",
+      "description": "Specificity determines which rule applies when multiple rules target the same element.",
+      "tags": [
+        "css",
+        "cascade"
+      ]
+    },
+    {
+      "title": "CSS media queries",
+      "description": "Media queries allow styles to adapt to different viewport sizes or device characteristics.",
+      "tags": [
+        "css",
+        "responsive"
+      ]
+    },
+    {
+      "title": "CSS variables",
+      "description": "Custom properties (variables) store values for reuse and are defined with --name syntax.",
+      "tags": [
+        "css",
+        "variables"
+      ]
+    },
+    {
+      "title": "CSS transitions",
+      "description": "Transitions animate property changes smoothly over a specified duration using transition properties.",
+      "tags": [
+        "css",
+        "animation"
+      ]
+    },
+    {
+      "title": "CSS transforms",
+      "description": "The transform property applies translation, rotation, scaling, or skewing to elements.",
+      "tags": [
+        "css",
+        "layout"
+      ]
+    },
+    {
+      "title": "CSS opacity",
+      "description": "The opacity property sets the transparency level of an element, from 0 (fully transparent) to 1 (fully opaque).",
+      "tags": [
+        "css",
+        "visual"
+      ]
+    },
+    {
+      "title": "CSS z-index",
+      "description": "z-index controls the stack order of positioned elements on the z-axis when elements overlap.",
+      "tags": [
+        "css",
+        "layout"
+      ]
+    },
+    {
+      "title": "CSS floats",
+      "description": "The float property positions an element to the left or right and lets content wrap around it.",
+      "tags": [
+        "css",
+        "layout"
+      ]
+    },
+    {
+      "title": "CSS display property",
+      "description": "The display property defines how an element is rendered, such as block, inline, or none.",
+      "tags": [
+        "css",
+        "layout"
+      ]
+    },
+    {
+      "title": "CSS positioning",
+      "description": "Use position: static, relative, absolute, fixed, or sticky to control element placement.",
+      "tags": [
+        "css",
+        "layout"
+      ]
+    },
+    {
+      "title": "CSS overflow",
+      "description": "The overflow property controls what happens when content is too large for its container.",
+      "tags": [
+        "css",
+        "layout"
+      ]
+    },
+    {
+      "title": "CSS border-radius",
+      "description": "border-radius rounds the corners of an element's outer border edge.",
+      "tags": [
+        "css",
+        "visual"
+      ]
+    },
+    {
+      "title": "CSS @keyframes",
+      "description": "@keyframes defines intermediate steps in a CSS animation sequence.",
+      "tags": [
+        "css",
+        "animation"
+      ]
+    },
+    {
+      "title": "JavaScript variables",
+      "description": "Variables can be declared with var, let, or const. let and const have block scope while var is function-scoped.",
+      "tags": [
+        "javascript",
+        "syntax"
+      ]
+    },
+    {
+      "title": "JavaScript functions",
+      "description": "Functions are defined with the function keyword or as arrow functions => and can take parameters and return values.",
+      "tags": [
+        "javascript",
+        "syntax"
+      ]
+    },
+    {
+      "title": "JavaScript arrays",
+      "description": "Arrays store ordered lists of values and provide methods like push, pop, and map.",
+      "tags": [
+        "javascript",
+        "data"
+      ]
+    },
+    {
+      "title": "JavaScript objects",
+      "description": "Objects store keyed collections of properties using {key: value} syntax.",
+      "tags": [
+        "javascript",
+        "data"
+      ]
+    },
+    {
+      "title": "JavaScript DOM manipulation",
+      "description": "Use document.querySelector to select elements and modify their properties to update the page dynamically.",
+      "tags": [
+        "javascript",
+        "dom"
+      ]
+    },
+    {
+      "title": "JavaScript event handling",
+      "description": "Use addEventListener to respond to user actions such as clicks or keyboard input.",
+      "tags": [
+        "javascript",
+        "events"
+      ]
+    },
+    {
+      "title": "JavaScript strict mode",
+      "description": "Strict mode is enabled with 'use strict' and catches common mistakes like using undeclared variables.",
+      "tags": [
+        "javascript",
+        "best practices"
+      ]
+    },
+    {
+      "title": "JavaScript promises",
+      "description": "Promises represent asynchronous operations and use then and catch handlers for results.",
+      "tags": [
+        "javascript",
+        "asynchronous"
+      ]
+    },
+    {
+      "title": "JavaScript async/await",
+      "description": "async functions return promises and await pauses execution until the promise settles, simplifying asynchronous code.",
+      "tags": [
+        "javascript",
+        "asynchronous"
+      ]
+    },
+    {
+      "title": "JavaScript template literals",
+      "description": "Template literals use backticks and ${expression} placeholders for easier string interpolation.",
+      "tags": [
+        "javascript",
+        "syntax"
+      ]
+    },
+    {
+      "title": "JavaScript JSON parsing",
+      "description": "JSON.parse converts a JSON string to an object, while JSON.stringify converts an object back to a string.",
+      "tags": [
+        "javascript",
+        "data"
+      ]
+    },
+    {
+      "title": "JavaScript arrow function syntax",
+      "description": "Arrow functions provide a shorter syntax and lexically bind the this value from the surrounding context.",
+      "tags": [
+        "javascript",
+        "syntax"
+      ]
+    },
+    {
+      "title": "JavaScript modules",
+      "description": "Modern JavaScript uses import and export statements to organize code into modules.",
+      "tags": [
+        "javascript",
+        "modules"
+      ]
+    },
+    {
+      "title": "JavaScript default parameters",
+      "description": "You can assign default values to function parameters to avoid undefined values when arguments are missing.",
+      "tags": [
+        "javascript",
+        "syntax"
+      ]
+    },
+    {
+      "title": "JavaScript error handling",
+      "description": "Use try...catch to handle exceptions and finally to run cleanup code regardless of errors.",
+      "tags": [
+        "javascript",
+        "errors"
+      ]
+    },
+    {
+      "title": "JavaScript closures",
+      "description": "A closure is a function that retains access to its outer scope, even after the outer function has returned.",
+      "tags": [
+        "javascript",
+        "functions"
+      ]
+    },
+    {
+      "title": "JavaScript fetch API",
+      "description": "fetch performs network requests and returns promises. Use response.json() to parse JSON results.",
+      "tags": [
+        "javascript",
+        "asynchronous"
+      ]
+    },
+    {
+      "title": "JavaScript classes",
+      "description": "ES6 classes provide a convenient syntax for creating objects and supporting inheritance with the extends keyword.",
+      "tags": [
+        "javascript",
+        "oop"
+      ]
+    },
+    {
+      "title": "JavaScript type coercion",
+      "description": "JavaScript converts values between types automatically in many operations, which can lead to unexpected results.",
+      "tags": [
+        "javascript",
+        "type"
+      ]
+    },
+    {
+      "title": "Python indentation",
+      "description": "Python uses indentation to define code blocks instead of braces. Consistent spacing is required to avoid IndentationError.",
+      "tags": [
+        "python",
+        "syntax"
+      ]
+    },
+    {
+      "title": "Python print function",
+      "description": "print() outputs text to the console and by default adds a newline unless end is specified.",
+      "tags": [
+        "python",
+        "io"
+      ]
+    },
+    {
+      "title": "Python lists",
+      "description": "Lists are ordered collections of items defined with square brackets and support methods like append and sort.",
+      "tags": [
+        "python",
+        "data"
+      ]
+    },
+    {
+      "title": "Python dictionaries",
+      "description": "Dictionaries store key-value pairs and are created with curly braces: {'key': 'value'}.",
+      "tags": [
+        "python",
+        "data"
+      ]
+    },
+    {
+      "title": "Python functions",
+      "description": "Functions are defined using def and may return values with the return statement.",
+      "tags": [
+        "python",
+        "functions"
+      ]
+    },
+    {
+      "title": "Python for loops",
+      "description": "for item in sequence iterates over each element of a sequence such as a list or tuple.",
+      "tags": [
+        "python",
+        "loops"
+      ]
+    },
+    {
+      "title": "Python if statements",
+      "description": "Use if, elif, and else to conditionally execute code based on boolean expressions.",
+      "tags": [
+        "python",
+        "control flow"
+      ]
+    },
+    {
+      "title": "Python exceptions",
+      "description": "Handle runtime errors with try, except, else, and finally blocks to manage cleanup.",
+      "tags": [
+        "python",
+        "errors"
+      ]
+    },
+    {
+      "title": "Python list comprehension",
+      "description": "[expression for item in iterable] creates a new list by evaluating the expression for each item.",
+      "tags": [
+        "python",
+        "syntax"
+      ]
+    },
+    {
+      "title": "Python modules",
+      "description": "Code can be organized into modules by placing functions and classes in separate .py files and importing them with import.",
+      "tags": [
+        "python",
+        "modules"
+      ]
+    },
+    {
+      "title": "Python virtual environments",
+      "description": "Use python -m venv env to create an isolated environment for dependencies.",
+      "tags": [
+        "python",
+        "environment"
+      ]
+    },
+    {
+      "title": "Python decorators",
+      "description": "Decorators wrap a function to modify its behavior. They are defined with the @ symbol above a function definition.",
+      "tags": [
+        "python",
+        "functions"
+      ]
+    },
+    {
+      "title": "Python generators",
+      "description": "Functions using yield return lazy iterators that produce values one at a time.",
+      "tags": [
+        "python",
+        "iterators"
+      ]
+    },
+    {
+      "title": "Python docstrings",
+      "description": "Triple-quoted strings at the top of modules, classes, or functions serve as documentation accessible via help().",
+      "tags": [
+        "python",
+        "documentation"
+      ]
+    },
+    {
+      "title": "Python with statement",
+      "description": "The with statement manages resources by calling __enter__ and __exit__ methods, often used with files.",
+      "tags": [
+        "python",
+        "context manager"
+      ]
+    },
+    {
+      "title": "Python slicing",
+      "description": "Sequence types like lists and strings can be sliced using [start:stop:step] notation.",
+      "tags": [
+        "python",
+        "data"
+      ]
+    },
+    {
+      "title": "Python lambda functions",
+      "description": "lambda arguments: expression creates small anonymous functions for short tasks.",
+      "tags": [
+        "python",
+        "functions"
+      ]
+    },
+    {
+      "title": "Python package installation",
+      "description": "Use pip install package to add third-party libraries from the Python Package Index.",
+      "tags": [
+        "python",
+        "package management"
+      ]
+    },
+    {
+      "title": "Python conditional expressions",
+      "description": "The syntax x if condition else y returns x when the condition is true and y otherwise.",
+      "tags": [
+        "python",
+        "syntax"
+      ]
+    },
+    {
+      "title": "Python f-strings",
+      "description": "Prefix a string with f and use {expression} for inline evaluations within the string.",
+      "tags": [
+        "python",
+        "formatting"
+      ]
+    },
+    {
+      "title": "Bash variables",
+      "description": "Variables are created with name=value and referenced with $name. Use quotes to preserve spaces.",
+      "tags": [
+        "bash",
+        "syntax"
+      ]
+    },
+    {
+      "title": "Bash positional parameters",
+      "description": "$1, $2, and so on represent command-line arguments passed to a script or function.",
+      "tags": [
+        "bash",
+        "parameters"
+      ]
+    },
+    {
+      "title": "Bash loops",
+      "description": "for, while, and until loops repeat commands while a condition is met.",
+      "tags": [
+        "bash",
+        "loops"
+      ]
+    },
+    {
+      "title": "Bash if statements",
+      "description": "if, elif, and else evaluate conditions using test commands or [[ expressions ]].",
+      "tags": [
+        "bash",
+        "control flow"
+      ]
+    },
+    {
+      "title": "Bash functions",
+      "description": "Functions group commands together with name() { body; } syntax and can accept parameters like regular scripts.",
+      "tags": [
+        "bash",
+        "functions"
+      ]
+    },
+    {
+      "title": "Bash case statement",
+      "description": "case allows pattern matching on a value to choose from multiple code branches.",
+      "tags": [
+        "bash",
+        "control flow"
+      ]
+    },
+    {
+      "title": "Bash arrays",
+      "description": "Arrays hold multiple values indexed numerically. Declare with arr=(one two) and access using ${arr[0]}.",
+      "tags": [
+        "bash",
+        "data"
+      ]
+    },
+    {
+      "title": "Bash arithmetic",
+      "description": "The $(( expression )) syntax performs integer arithmetic expansions.",
+      "tags": [
+        "bash",
+        "syntax"
+      ]
+    },
+    {
+      "title": "Bash command substitution",
+      "description": "Use $(command) to capture a command's output into a variable or another command.",
+      "tags": [
+        "bash",
+        "shell"
+      ]
+    },
+    {
+      "title": "Bash quoting",
+      "description": "Single quotes preserve literal text. Double quotes allow variable expansion within the string.",
+      "tags": [
+        "bash",
+        "syntax"
+      ]
+    },
+    {
+      "title": "Bash redirection",
+      "description": "Use > to redirect output, < for input, and >> to append output to a file.",
+      "tags": [
+        "bash",
+        "io"
+      ]
+    },
+    {
+      "title": "Bash pipes",
+      "description": "Pipes, represented by |, send the output of one command directly to another command's input.",
+      "tags": [
+        "bash",
+        "shell"
+      ]
+    },
+    {
+      "title": "Bash exit status",
+      "description": "Commands return an exit status code stored in $?. Zero typically means success.",
+      "tags": [
+        "bash",
+        "shell"
+      ]
+    },
+    {
+      "title": "Bash traps",
+      "description": "trap allows scripts to execute commands when receiving signals like SIGINT.",
+      "tags": [
+        "bash",
+        "signals"
+      ]
+    },
+    {
+      "title": "Bash here documents",
+      "description": "A here document uses <<EOF syntax to pass multiline strings or input to a command.",
+      "tags": [
+        "bash",
+        "io"
+      ]
+    },
+    {
+      "title": "Bash subshell",
+      "description": "Commands in parentheses run in a subshell, creating a new environment for variable scope.",
+      "tags": [
+        "bash",
+        "shell"
+      ]
+    },
+    {
+      "title": "Bash command chaining",
+      "description": "Use && and || to execute commands conditionally based on the success of previous commands.",
+      "tags": [
+        "bash",
+        "shell"
+      ]
+    },
+    {
+      "title": "Bash globbing",
+      "description": "Wildcard patterns like * and ? match multiple filenames in path expansions.",
+      "tags": [
+        "bash",
+        "files"
+      ]
+    },
+    {
+      "title": "Bash set builtin",
+      "description": "The set command adjusts shell options. For example, set -e exits on errors and set -x prints commands.",
+      "tags": [
+        "bash",
+        "shell"
+      ]
+    },
+    {
+      "title": "CSS content property",
+      "description": "The content property inserts generated text or images in pseudo-elements like ::before.",
+      "tags": [
+        "css",
+        "generated"
+      ]
+    },
+    {
+      "title": "JavaScript spread syntax",
+      "description": "The ... operator expands iterable values in places where multiple arguments or elements are expected.",
+      "tags": [
+        "javascript",
+        "syntax"
+      ]
+    },
+    {
+      "title": "Bash aliases",
+      "description": "alias ls='ls -F' creates a shortcut. Aliases help shorten frequently used commands.",
+      "tags": [
+        "bash",
+        "shell"
+      ]
+    }
+  ]
+}
