@@ -3,7 +3,7 @@ from .modes.teaching_mode import add_fact, add_snippet
 from .modes.chat_mode import chat, ChatLockedError
 from .logic.coder import generate_code
 from .logic.parser import parse_file
-from .logic.responder import answer_question
+from .logic.responder import get_response
 
 HELP_TEXT = """Commands:
 /mode diary   - enter diary mode
@@ -49,7 +49,7 @@ def main():
             continue
         if line.startswith('/ask'):
             question = line[len('/ask'):].strip()
-            print(answer_question(question))
+            print(get_response(question))
             continue
         if line.startswith('/code'):
             task = line[len('/code'):].strip()
