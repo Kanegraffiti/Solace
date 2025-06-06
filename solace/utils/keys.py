@@ -1,7 +1,7 @@
 from pathlib import Path
 from .encryption import load_key
 
-KEY_FILE = Path(__file__).resolve().parents[2] / 'storage' / 'keys' / 'key.key'
+KEY_FILE = Path(__file__).resolve().parents[2] / 'storage' / '.key'
 
 
 def get_key() -> bytes:
