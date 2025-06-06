@@ -2,6 +2,7 @@ from pathlib import Path
 import json
 import re
 
+# path to bundled seed conversations
 DATA_FILE = Path(__file__).resolve().parents[2] / 'data' / 'convo_seed.json'
 
 
@@ -27,6 +28,11 @@ def get_reply(message: str) -> str:
     message_tokens = set(_tokenize(message))
     best_score = 0
     best_reply = None
+
+    for ex in examples:
+        prompt = ex.get('prompt', '')
+        if prompt.lower() in message.lower():
+            return ex.get('response', '')
 
     for ex in examples:
         prompt_tokens = set(_tokenize(ex.get('prompt', '')))
