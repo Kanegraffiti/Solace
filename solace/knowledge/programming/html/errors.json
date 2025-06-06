@@ -1,0 +1,12 @@
+[
+  {
+    "error_message": "Unclosed tag",
+    "explanation": "An HTML element was opened but not properly closed.",
+    "fix": "Add the missing closing tag in the correct position."
+  },
+  {
+    "error_message": "Invalid attribute",
+    "explanation": "An attribute used on an element is not recognized.",
+    "fix": "Remove or correct the attribute name."
+  }
+]

@@ -1,0 +1,12 @@
+[
+  {
+    "error_message": "IndentationError",
+    "explanation": "Occurs when the indentation of your code is inconsistent or incorrect.",
+    "fix": "Ensure blocks use the same number of spaces or tabs."
+  },
+  {
+    "error_message": "TypeError: unsupported operand type",
+    "explanation": "Happens when an operation is applied to an object of inappropriate type.",
+    "fix": "Check the types of your variables before performing operations."
+  }
+]

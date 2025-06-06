@@ -1,0 +1,42 @@
+[
+  {
+    "description": "Simple form",
+    "keywords": ["html", "form", "input"],
+    "code": "<form action=\"/submit\" method=\"post\">\n  <input type=\"text\" name=\"username\">\n  <button type=\"submit\">Send</button>\n</form>",
+    "explanation": "Creates a basic form with a text input and submit button.",
+    "tags": ["forms"],
+    "text_to_speak": "Creates a basic form with a text input and submit button."
+  },
+  {
+    "description": "Clickable button",
+    "keywords": ["html", "button"],
+    "code": "<button onclick=\"alert('hi')\">Click me</button>",
+    "explanation": "Defines a button that triggers JavaScript when clicked.",
+    "tags": ["buttons"],
+    "text_to_speak": "Defines a button that triggers JavaScript when clicked."
+  },
+  {
+    "description": "Basic page layout",
+    "keywords": ["html", "layout", "div"],
+    "code": "<div class=\"container\">\n  <header>Header</header>\n  <main>Main content</main>\n  <footer>Footer</footer>\n</div>",
+    "explanation": "Uses div elements to structure header, main, and footer sections.",
+    "tags": ["structure"],
+    "text_to_speak": "Uses div elements to structure header, main, and footer sections."
+  },
+  {
+    "description": "Add an image",
+    "keywords": ["html", "image", "img"],
+    "code": "<img src=\"photo.jpg\" alt=\"My photo\">",
+    "explanation": "Embeds an image and provides alternate text for accessibility.",
+    "tags": ["media"],
+    "text_to_speak": "Embeds an image and provides alternate text for accessibility."
+  },
+  {
+    "description": "Hyperlink to another page",
+    "keywords": ["html", "link", "anchor"],
+    "code": "<a href=\"https://example.com\">Visit</a>",
+    "explanation": "Creates a clickable link to another page or site.",
+    "tags": ["links"],
+    "text_to_speak": "Creates a clickable link to another page or site."
+  }
+]

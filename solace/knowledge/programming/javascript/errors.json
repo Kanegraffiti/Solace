@@ -1,0 +1,12 @@
+[
+  {
+    "error_message": "Uncaught ReferenceError",
+    "explanation": "A variable or function is used before it is defined.",
+    "fix": "Declare the variable or function before using it."
+  },
+  {
+    "error_message": "TypeError",
+    "explanation": "A value is used in an unexpected way, like calling something that is not a function.",
+    "fix": "Check that the value is of the correct type before use."
+  }
+]

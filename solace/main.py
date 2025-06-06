@@ -1,13 +1,12 @@
 from .modes.diary_mode import add_entry
 from .modes.teaching_mode import add_fact, add_snippet
 from .modes.chat_mode import chat, ChatLockedError
-from .logic.coder import generate_code
+from .logic.codegen import lookup as code_lookup, explain as code_explain, add_example
+from .logic.debugger import lookup as debug_lookup
 from .logic.importer import process_file
-from .logic.asker import get_answer
 from .logic.converse import get_reply
-from .logic.notes import add_note, search_notes
+from .logic.notes import add_note
 from .logic.todo import add_task, list_tasks, mark_complete, delete_task
-from .logic.recall import search as recall_search
 from datetime import datetime
 from .utils.datetime import request_timestamp
 from .config import ENABLE_TIMESTAMP_REQUEST, ENABLE_TAGGING
@@ -19,8 +18,10 @@ HELP_TEXT = """Commands:
 /mode chat    - chat with Solace (requires 10 diary entries)
 /notes        - create a note
 /todo ...     - manage tasks (add/list/done/delete)
-/ask <q>      - search notes and diary
+/ask <q>      - ask how to code something
 /code <task>  - generate a code snippet
+/debug <err>  - look up an error message
+/teachcode    - add a coding example
 /import <f>   - import facts from file
 /teach upload <file> - import facts from supported file
 /chat <msg>   - quick conversation
@@ -147,18 +148,76 @@ def main():
             continue
         if line.startswith('/ask'):
             query = line[len('/ask'):].strip()
-            results = recall_search(query)
-            for r in results:
-                ts = r.get('timestamp', '')
-                print(f"[{ts}] {r.get('text', '')}")
-            if not results:
-                response = get_answer(query)
-                print(response)
-                speak(response)
+            result = code_explain(query)
+            if result:
+                code, expl = result
+                print(code)
+                print(expl)
+            else:
+                print("I'm not sure yet, want to teach me this?")
+                ans = input('[y/N]: ').strip().lower()
+                if ans.startswith('y'):
+                    lang = input('Language: ').strip()
+                    desc = query
+                    print('Enter code (end with blank line):')
+                    lines = []
+                    while True:
+                        ln = input()
+                        if not ln:
+                            break
+                        lines.append(ln)
+                    code_text = '\n'.join(lines)
+                    explanation = input('Explanation: ').strip()
+                    add_example(lang, desc, code_text, explanation)
+                    print('Thanks, stored!')
             continue
         if line.startswith('/code'):
             task = line[len('/code'):].strip()
-            print(generate_code(task))
+            result = code_lookup(task)
+            if result:
+                code, expl = result
+                print(code)
+                print(expl)
+            else:
+                print("I'm not sure yet, want to teach me this?")
+                ans = input('[y/N]: ').strip().lower()
+                if ans.startswith('y'):
+                    lang = input('Language: ').strip()
+                    desc = task
+                    print('Enter code (end with blank line):')
+                    lines = []
+                    while True:
+                        ln = input()
+                        if not ln:
+                            break
+                        lines.append(ln)
+                    code_text = '\n'.join(lines)
+                    explanation = input('Explanation: ').strip()
+                    add_example(lang, desc, code_text, explanation)
+                    print('Thanks, stored!')
+            continue
+        if line.startswith('/debug'):
+            err = line[len('/debug'):].strip()
+            fix = debug_lookup(err)
+            if fix:
+                print(fix)
+            else:
+                print("I don't know this error yet.")
+            continue
+        if line.startswith('/teachcode'):
+            lang = input('Language: ').strip()
+            desc = input('Description: ').strip()
+            print('Enter code (end with blank line):')
+            lines = []
+            while True:
+                ln = input()
+                if not ln:
+                    break
+                lines.append(ln)
+            code_text = '\n'.join(lines)
+            explanation = input('Explanation: ').strip()
+            add_example(lang, desc, code_text, explanation)
+            print('Example saved.')
             continue
         if line.startswith('/chat'):
             message = line[len('/chat'):].strip()
@@ -182,7 +241,11 @@ def main():
                 continue
             print(f'You said: {heard}')
             if heard.endswith('?'):
-                resp = get_answer(heard)
+                found = code_explain(heard)
+                if found:
+                    resp = f"{found[0]}\n{found[1]}"
+                else:
+                    resp = get_reply(heard)
             else:
                 resp = get_reply(heard)
             print(resp)

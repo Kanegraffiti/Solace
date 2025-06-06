@@ -1,0 +1,42 @@
+[
+  {
+    "description": "Assign a variable",
+    "keywords": ["variable", "assignment", "bash"],
+    "code": "NAME=\"Alice\"",
+    "explanation": "Stores a value in a shell variable without spaces around the equal sign.",
+    "tags": ["beginner"],
+    "text_to_speak": "Stores a value in a shell variable."
+  },
+  {
+    "description": "Loop over files",
+    "keywords": ["for", "loop", "files", "bash"],
+    "code": "for f in *.txt; do\n  echo $f\ndone",
+    "explanation": "Iterates over all txt files and prints each file name.",
+    "tags": ["looping"],
+    "text_to_speak": "Iterates over all text files and prints each file name."
+  },
+  {
+    "description": "Read file line by line",
+    "keywords": ["while", "read", "file", "bash"],
+    "code": "while read line; do\n  echo $line\ndone < input.txt",
+    "explanation": "Processes a file one line at a time using a while loop.",
+    "tags": ["files"],
+    "text_to_speak": "Processes a file one line at a time using a while loop."
+  },
+  {
+    "description": "Write output to a file",
+    "keywords": ["redirect", "output", "bash"],
+    "code": "echo 'hello' > out.txt",
+    "explanation": "Redirects the echo command's output into a file, overwriting it.",
+    "tags": ["files"],
+    "text_to_speak": "Redirects output into a file, overwriting it."
+  },
+  {
+    "description": "Simple if statement",
+    "keywords": ["if", "condition", "bash"],
+    "code": "if [ -f myfile ]; then\n  echo 'exists'\nfi",
+    "explanation": "Checks if a file exists before running a command.",
+    "tags": ["conditionals"],
+    "text_to_speak": "Checks if a file exists before running a command."
+  }
+]
