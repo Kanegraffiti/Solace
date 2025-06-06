@@ -5,9 +5,17 @@ import json
 import re
 from collections import Counter
 
-import fitz  # PyMuPDF
-from ebooklib import epub
-from bs4 import BeautifulSoup
+try:
+    import fitz  # PyMuPDF
+except Exception:  # noqa: PIE786
+    fitz = None
+
+try:
+    from ebooklib import epub  # type: ignore
+    from bs4 import BeautifulSoup  # type: ignore
+except Exception:  # noqa: PIE786
+    epub = None
+    BeautifulSoup = None
 
 DATA_FILE = Path(__file__).resolve().parents[2] / 'data' / 'facts_seed.json'
 
@@ -25,6 +33,8 @@ def _read_text(path: Path) -> str:
     if path.suffix in {'.txt', '.md', '.rst'}:
         return path.read_text(encoding='utf-8')
     if path.suffix == '.pdf':
+        if fitz is None:
+            raise RuntimeError('PyMuPDF is required to read PDF files')
         text = []
         doc = fitz.open(str(path))
         try:
@@ -34,6 +44,8 @@ def _read_text(path: Path) -> str:
             doc.close()
         return '\n'.join(text)
     if path.suffix == '.epub':
+        if epub is None or BeautifulSoup is None:
+            raise RuntimeError('ebooklib and beautifulsoup4 are required to read EPUB files')
         book = epub.read_epub(str(path))
         text = []
         for item in book.get_items():
