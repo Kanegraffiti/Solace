@@ -1,0 +1,12 @@
+[
+  {
+    "error_message": "Unknown property",
+    "explanation": "The CSS property name is misspelled or not supported.",
+    "fix": "Verify the property name and browser support."
+  },
+  {
+    "error_message": "Missing semicolon",
+    "explanation": "A rule is missing a semicolon before the next declaration.",
+    "fix": "Add the semicolon at the end of the line."
+  }
+]

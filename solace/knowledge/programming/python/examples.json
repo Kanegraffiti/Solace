@@ -1,0 +1,42 @@
+[
+  {
+    "description": "Loop through a list",
+    "keywords": ["loop", "list", "for", "python"],
+    "code": "for item in my_list:\n    print(item)",
+    "explanation": "This iterates through each item in a list and prints it.",
+    "tags": ["beginner", "looping"],
+    "text_to_speak": "This iterates through each item in a list and prints it."
+  },
+  {
+    "description": "Define a function",
+    "keywords": ["function", "def", "python"],
+    "code": "def my_function(param):\n    return param * 2",
+    "explanation": "Functions group reusable code and return a value.",
+    "tags": ["beginner", "functions"],
+    "text_to_speak": "Functions group reusable code and return a value."
+  },
+  {
+    "description": "Conditional if statement",
+    "keywords": ["if", "condition", "python"],
+    "code": "if x > 10:\n    print('large')\nelse:\n    print('small')",
+    "explanation": "Checks a condition and executes code blocks accordingly.",
+    "tags": ["beginner", "conditionals"],
+    "text_to_speak": "Checks a condition and executes code blocks accordingly."
+  },
+  {
+    "description": "While loop",
+    "keywords": ["while", "loop", "python"],
+    "code": "count = 0\nwhile count < 5:\n    print(count)\n    count += 1",
+    "explanation": "Repeats a block of code while a condition remains true.",
+    "tags": ["looping"],
+    "text_to_speak": "Repeats a block of code while a condition remains true."
+  },
+  {
+    "description": "List comprehension",
+    "keywords": ["list", "comprehension", "python"],
+    "code": "squares = [x*x for x in range(10)]",
+    "explanation": "Creates a new list by applying an expression to each item in a sequence.",
+    "tags": ["lists", "advanced"],
+    "text_to_speak": "Creates a new list by applying an expression to each item in a sequence."
+  }
+]

@@ -1,0 +1,12 @@
+[
+  {
+    "error_message": "command not found",
+    "explanation": "The shell could not locate the command you typed.",
+    "fix": "Check that the program is installed and the path is correct."
+  },
+  {
+    "error_message": "Permission denied",
+    "explanation": "You do not have permission to execute the file or access the directory.",
+    "fix": "Use chmod to adjust permissions or run with appropriate privileges."
+  }
+]

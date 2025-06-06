@@ -1,0 +1,42 @@
+[
+  {
+    "description": "Center an element",
+    "keywords": ["css", "center", "margin"],
+    "code": ".box {\n  margin: 0 auto;\n}",
+    "explanation": "Using auto left and right margins centers a block element within its container.",
+    "tags": ["layout"],
+    "text_to_speak": "Using auto left and right margins centers a block element within its container."
+  },
+  {
+    "description": "Change text color",
+    "keywords": ["css", "color", "text"],
+    "code": "p {\n  color: blue;\n}",
+    "explanation": "Sets the text color of paragraphs to blue.",
+    "tags": ["colors"],
+    "text_to_speak": "Sets the text color of paragraphs to blue."
+  },
+  {
+    "description": "Add margin spacing",
+    "keywords": ["css", "margin", "spacing"],
+    "code": ".item {\n  margin: 10px;\n}",
+    "explanation": "Adds space around an element on all sides.",
+    "tags": ["spacing"],
+    "text_to_speak": "Adds space around an element on all sides."
+  },
+  {
+    "description": "Flexbox center",
+    "keywords": ["css", "flexbox", "center"],
+    "code": ".container {\n  display: flex;\n  justify-content: center;\n  align-items: center;\n}",
+    "explanation": "Centers children both horizontally and vertically using flexbox.",
+    "tags": ["layout"],
+    "text_to_speak": "Centers children both horizontally and vertically using flexbox."
+  },
+  {
+    "description": "Set background color",
+    "keywords": ["css", "background", "color"],
+    "code": "body {\n  background-color: #f0f0f0;\n}",
+    "explanation": "Applies a light gray background color to the page.",
+    "tags": ["colors"],
+    "text_to_speak": "Applies a light gray background color to the page."
+  }
+]

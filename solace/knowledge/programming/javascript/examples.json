@@ -1,0 +1,42 @@
+[
+  {
+    "description": "Show an alert",
+    "keywords": ["javascript", "alert"],
+    "code": "alert('Hello world');",
+    "explanation": "Displays a pop-up alert box with the given message.",
+    "tags": ["beginner"],
+    "text_to_speak": "Displays a pop-up alert box with the given message."
+  },
+  {
+    "description": "Select element by id",
+    "keywords": ["javascript", "dom", "selector"],
+    "code": "const elem = document.getElementById('myId');",
+    "explanation": "Retrieves a DOM element with the specified id.",
+    "tags": ["dom"],
+    "text_to_speak": "Retrieves a DOM element with the specified id."
+  },
+  {
+    "description": "Loop over array",
+    "keywords": ["javascript", "for", "array", "loop"],
+    "code": "for (let i = 0; i < arr.length; i++) {\n  console.log(arr[i]);\n}",
+    "explanation": "Iterates over an array using a traditional for loop.",
+    "tags": ["looping"],
+    "text_to_speak": "Iterates over an array using a traditional for loop."
+  },
+  {
+    "description": "Add click listener",
+    "keywords": ["javascript", "event", "listener"],
+    "code": "button.addEventListener('click', function() {\n  console.log('clicked');\n});",
+    "explanation": "Runs a function when the button is clicked.",
+    "tags": ["events"],
+    "text_to_speak": "Runs a function when the button is clicked."
+  },
+  {
+    "description": "Change element text",
+    "keywords": ["javascript", "dom", "text"],
+    "code": "document.getElementById('msg').textContent = 'Hi';",
+    "explanation": "Sets the text content of an element.",
+    "tags": ["dom"],
+    "text_to_speak": "Sets the text content of an element."
+  }
+]
