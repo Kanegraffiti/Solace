@@ -3,8 +3,9 @@ from .modes.teaching_mode import add_fact, add_snippet
 from .modes.chat_mode import chat, ChatLockedError
 from .logic.coder import generate_code
 from .logic.importer import process_file
-from .logic.responder import get_response
+from .logic.asker import get_answer
 from .logic.converse import get_reply
+from .utils.voice import speak, recognize_speech
 
 HELP_TEXT = """Commands:
 /mode diary   - enter diary mode
@@ -14,6 +15,8 @@ HELP_TEXT = """Commands:
 /code <task>  - generate a code snippet
 /import <f>   - import facts from file
 /chat <msg>   - quick conversation
+/speak [txt]  - say text aloud
+/listen       - listen and process speech
 /help         - show this message
 /exit         - exit program
 """
@@ -50,7 +53,9 @@ def main():
             continue
         if line.startswith('/ask'):
             question = line[len('/ask'):].strip()
-            print(get_response(question))
+            response = get_answer(question)
+            print(response)
+            speak(response)
             continue
         if line.startswith('/code'):
             task = line[len('/code'):].strip()
@@ -58,7 +63,31 @@ def main():
             continue
         if line.startswith('/chat'):
             message = line[len('/chat'):].strip()
-            print(get_reply(message))
+            response = get_reply(message)
+            print(response)
+            speak(response)
+            continue
+        if line.startswith('/speak'):
+            text = line[len('/speak'):].strip()
+            if text:
+                speak(text)
+            continue
+        if line.startswith('/listen'):
+            try:
+                heard = recognize_speech()
+            except Exception as e:
+                print(f'Error: {e}')
+                continue
+            if not heard:
+                print('Sorry, I did not catch that.')
+                continue
+            print(f'You said: {heard}')
+            if heard.endswith('?'):
+                resp = get_answer(heard)
+            else:
+                resp = get_reply(heard)
+            print(resp)
+            speak(resp)
             continue
 
         if current_mode == 'diary':
