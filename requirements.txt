@@ -1,4 +1,5 @@
 pyttsx3
-vosk
 sounddevice
+speechrecognition
+pocketsphinx
 cryptography

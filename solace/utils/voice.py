@@ -1,6 +1,4 @@
-import json
 import platform
-from pathlib import Path
 
 try:
     import pyttsx3  # optional text to speech
@@ -13,12 +11,9 @@ except Exception:  # noqa: PIE786
     sd = None
 
 try:
-    import vosk  # optional speech recognition
+    import speech_recognition as sr  # optional speech recognition
 except Exception:  # noqa: PIE786
-    vosk = None
-
-import queue
-import time
+    sr = None
 
 from ..config import ENABLE_TTS
 
@@ -46,27 +41,18 @@ def speak(text: str):
 
 
 def recognize_speech(duration: int = 5) -> str:
-    """Listen from microphone and return recognized text using Vosk."""
-    if sd is None or vosk is None:
+    """Listen from microphone and return recognized text using PocketSphinx."""
+    if sd is None or sr is None:
         raise RuntimeError('Speech recognition dependencies not available')
-    model_dir = Path(__file__).resolve().parents[1] / 'models' / 'vosk-model-small-en-us-0.15'
-    if not model_dir.exists():
-        raise FileNotFoundError(f"Vosk model not found in {model_dir}")
-
-    model = vosk.Model(str(model_dir))
     samplerate = 16000
-    rec = vosk.KaldiRecognizer(model, samplerate)
-    q = queue.Queue()
-
-    def callback(indata, frames, time_info, status):
-        q.put(bytes(indata))
-
-    with sd.RawInputStream(samplerate=samplerate, blocksize=8000, dtype='int16',
-                           channels=1, callback=callback):
-        start = time.time()
-        while time.time() - start < duration:
-            data = q.get()
-            if rec.AcceptWaveform(data):
-                break
-    result = json.loads(rec.FinalResult())
-    return result.get('text', '')
+    recording = sd.rec(int(duration * samplerate), samplerate=samplerate,
+                       channels=1, dtype='int16')
+    sd.wait()
+    recognizer = sr.Recognizer()
+    audio_data = sr.AudioData(recording.tobytes(), samplerate, 2)
+    try:
+        return recognizer.recognize_sphinx(audio_data)
+    except sr.UnknownValueError:
+        return ''
+    except sr.RequestError as e:
+        raise RuntimeError(f'Speech recognition error: {e}')

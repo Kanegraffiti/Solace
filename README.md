@@ -19,7 +19,7 @@ Solace is a lightweight offline companion that runs entirely in your terminal. I
 - `pip` for installing dependencies
 - On Termux: package manager (`pkg`) for system libraries
 
-Voice features rely on `pyttsx3`, `sounddevice` and `vosk`. These require system audio libraries such as `espeak` and `portaudio`. If they are missing, Solace will still run but `/speak` and `/listen` commands will be disabled.
+Voice features rely on `pyttsx3`, `sounddevice`, `speechrecognition` and `pocketsphinx`. These require system audio libraries such as `espeak` and `portaudio`. If they are missing, Solace will still run but `/speak` and `/listen` commands will be disabled.
 
 ## Quick start
 1. Clone this repository and change into the folder:
@@ -38,13 +38,12 @@ Voice features rely on `pyttsx3`, `sounddevice` and `vosk`. These require system
    processing features. If you skip this step Solace will still run, but
    file import capabilities will be limited.
 3. The first private entry will generate `storage/keys/key.key`. Back this file up if you plan to encrypt notes.
-4. (Optional) Download a Vosk English model from [alphacephei.com/vosk/models](https://alphacephei.com/vosk/models) and extract it into `solace/models/` so that the path looks like `solace/models/vosk-model-small-en-us-0.15`.
-5. Run the program:
+4. Run the program:
    ```bash
    python main.py
    ```
-6. Type `/help` inside the program to see the available commands.
-7. Use `import_openbooks.py <file> <language>` to bulk add example code from cleaned tutorials.
+5. Type `/help` inside the program to see the available commands.
+6. Use `import_openbooks.py <file> <language>` to bulk add example code from cleaned tutorials.
 
 ### Running on Termux (Android)
 1. Install Python: `pkg install python`.
@@ -63,7 +62,7 @@ solace/
   modes/              # diary, teaching and chat mode implementations
   logic/              # helper modules for coding, import, conversation, etc.
   utils/              # storage, file tools and optional voice utilities
-  models/             # place Vosk speech model here (optional)
+  models/             # reserved for voice models (optional)
 ```
 All saved data lives in the `data/` directory as simple JSON files so you can back them up or edit them manually.
 
