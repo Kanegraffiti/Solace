@@ -19,7 +19,16 @@ Solace is a lightweight offline companion that runs entirely in your terminal. I
 - `pip` for installing dependencies
 - On Termux: package manager (`pkg`) for system libraries
 
-Voice features rely on `pyttsx3`, `sounddevice`, `speechrecognition` and `pocketsphinx`. These require system audio libraries such as `espeak` and `portaudio`. If they are missing, Solace will still run but `/speak` and `/listen` commands will be disabled.
+### Voice Mode (Optional)
+
+Solace can use text-to-speech (TTS) and speech recognition (STT) if the following Python packages are installed:
+
+- `pyttsx3`
+- `sounddevice`
+- `speechrecognition`
+- `pocketsphinx`
+
+These libraries rely on external tools like `espeak`, `portaudio`, or `alsa` depending on your platform. When they are missing Solace will fall back to text prompts and `/speak` will print an error instead of crashing.
 
 ## Quick start
 1. Clone this repository and change into the folder:

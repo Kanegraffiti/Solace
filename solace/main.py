@@ -16,14 +16,17 @@ def _setup() -> None:
     name = input("What is your name? ").strip()
     pronouns = input("Your pronouns: ").strip()
     mode = input("Preferred default mode (diary/code/notes): ").strip() or "diary"
-    voice = input("Enable voice mode? (y/n): ").strip().lower().startswith("y")
+    voice_mode = input("Enable voice mode? (y/n): ").strip().lower().startswith("y")
     cfg = {
         "name": name,
         "pronouns": pronouns,
         "default_mode": mode,
-        "voice": voice,
+        "voice_mode_enabled": voice_mode,
     }
     save_settings(cfg)
+    if voice_mode:
+        from .utils.envcheck import check_voice_dependencies
+        check_voice_dependencies()
     _demo_seed()
 
 

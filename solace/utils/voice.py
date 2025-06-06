@@ -1,21 +1,36 @@
 import platform
+import importlib
+
+VOICE_RECOGNITION_AVAILABLE = True
 
 try:
-    import pyttsx3  # optional text to speech
+    pyttsx3 = importlib.import_module('pyttsx3')
 except Exception:  # noqa: PIE786
     pyttsx3 = None
 
 try:
-    import sounddevice as sd  # optional microphone access
+    sd = importlib.import_module('sounddevice')
 except Exception:  # noqa: PIE786
     sd = None
+    VOICE_RECOGNITION_AVAILABLE = False
 
 try:
-    import speech_recognition as sr  # optional speech recognition
+    sr = importlib.import_module('speech_recognition')
 except Exception:  # noqa: PIE786
     sr = None
+    VOICE_RECOGNITION_AVAILABLE = False
 
-from ..config import ENABLE_TTS
+try:
+    import pyaudio  # noqa: F401
+except Exception:  # noqa: PIE786
+    VOICE_RECOGNITION_AVAILABLE = False
+
+try:
+    import pocketsphinx  # noqa: F401
+except Exception:  # noqa: PIE786
+    VOICE_RECOGNITION_AVAILABLE = False
+
+from ..config import VOICE_MODE_ENABLED
 
 
 _engine = None
@@ -31,28 +46,41 @@ def _get_engine():
     return _engine
 
 
-def speak(text: str):
-    """Speak the given text using pyttsx3 if enabled."""
-    if not ENABLE_TTS or pyttsx3 is None:
+def speak_text(text: str) -> None:
+    """Speak the given text using pyttsx3 if available."""
+    if not VOICE_MODE_ENABLED or pyttsx3 is None:
         return
-    engine = _get_engine()
-    engine.say(text)
-    engine.runAndWait()
-
-
-def recognize_speech(duration: int = 5) -> str:
-    """Listen from microphone and return recognized text using PocketSphinx."""
-    if sd is None or sr is None:
-        raise RuntimeError('Speech recognition dependencies not available')
-    samplerate = 16000
-    recording = sd.rec(int(duration * samplerate), samplerate=samplerate,
-                       channels=1, dtype='int16')
-    sd.wait()
-    recognizer = sr.Recognizer()
-    audio_data = sr.AudioData(recording.tobytes(), samplerate, 2)
     try:
+        engine = _get_engine()
+        engine.say(text)
+        engine.runAndWait()
+    except Exception:  # noqa: BLE001
+        print("Unable to speak. Please check TTS dependencies.")
+
+
+# backward compatibility
+speak = speak_text
+
+
+def recognize_speech(duration: int = 5) -> str | None:
+    """Listen from microphone and return recognized text using PocketSphinx."""
+    if not VOICE_MODE_ENABLED or not VOICE_RECOGNITION_AVAILABLE:
+        print("Voice recognition is not available on this system.")
+        return None
+    if sd is None or sr is None:
+        print("Voice recognition is not available on this system.")
+        return None
+    samplerate = 16000
+    try:
+        recording = sd.rec(int(duration * samplerate), samplerate=samplerate,
+                           channels=1, dtype='int16')
+        sd.wait()
+        recognizer = sr.Recognizer()
+        audio_data = sr.AudioData(recording.tobytes(), samplerate, 2)
         return recognizer.recognize_sphinx(audio_data)
     except sr.UnknownValueError:
         return ''
-    except sr.RequestError as e:
-        raise RuntimeError(f'Speech recognition error: {e}')
+    except Exception as e:  # noqa: BLE001
+        print(f"Speech recognition error: {e}")
+        return None
+
