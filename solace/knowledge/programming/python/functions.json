@@ -1,0 +1,27 @@
+[
+  {
+    "name": "print",
+    "arguments": "*objects, sep=' ', end='\\n', file=None, flush=False",
+    "description": "Print objects to the text stream file, separated by sep and followed by end."
+  },
+  {
+    "name": "len",
+    "arguments": "s",
+    "description": "Return the length (number of items) of an object."
+  },
+  {
+    "name": "range",
+    "arguments": "stop | start, stop[, step]",
+    "description": "Return an iterable sequence of numbers."  
+  },
+  {
+    "name": "enumerate",
+    "arguments": "iterable, start=0",
+    "description": "Return an iterator yielding pairs of an index and value from the iterable."
+  },
+  {
+    "name": "open",
+    "arguments": "file, mode='r', buffering=-1, encoding=None, errors=None, newline=None, closefd=True, opener=None",
+    "description": "Open file and return a corresponding file object."  
+  }
+]

@@ -10,6 +10,7 @@ Solace is a lightweight offline companion that runs entirely in your terminal. I
 - **Voice** – optional text‑to‑speech and speech recognition if the necessary libraries are available.
 - **Private entries** – diary and knowledge items can be encrypted with a local key.
 - **Memory tracker** – `/remember` and `/forget` manage personal reminders.
+- **Function reference** – `/func` shows arguments and docs for known functions.
 - **Summary** – `/summary` shows how much you have taught Solace.
 - **Fallback log** – unanswered questions are stored for later review.
 

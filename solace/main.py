@@ -3,6 +3,7 @@ from .modes.teaching_mode import add_fact, add_snippet
 from .modes.chat_mode import chat, ChatLockedError
 from .logic.codegen import lookup as code_lookup, explain as code_explain, add_example
 from .logic.debugger import lookup as debug_lookup
+from .logic.reference import lookup as reference_lookup
 from .logic.importer import process_file
 from .logic.converse import get_reply
 from .logic.notes import add_note
@@ -27,6 +28,7 @@ HELP_TEXT = """Commands:
 /ask <q>      - ask how to code something
 /code <task>  - generate a code snippet
 /debug <err>  - look up an error message
+/func <name>  - show function reference
 /teachcode    - add a coding example
 /import <f>   - import facts from file
 /teach upload <file> - import facts from supported file
@@ -239,6 +241,15 @@ def main():
             else:
                 log_query('debug', err)
                 print("I don't know this error yet.")
+            continue
+        if line.startswith('/func'):
+            query = line[len('/func'):].strip()
+            ref = reference_lookup(query)
+            if ref:
+                print(ref)
+                last_response = ref
+            else:
+                print('Function not found.')
             continue
         if line.startswith('/teachcode'):
             lang = input('Language: ').strip()
