@@ -6,7 +6,7 @@ from .logic.importer import process_file
 from .logic.asker import get_answer
 from .logic.converse import get_reply
 from .logic.notes import add_note, search_notes
-from .logic.todo import add_task, list_tasks, mark_done
+from .logic.todo import add_task, list_tasks, mark_complete, delete_task
 from .logic.recall import search as recall_search
 from datetime import datetime
 from .utils.datetime import request_timestamp
@@ -17,11 +17,12 @@ HELP_TEXT = """Commands:
 /mode diary   - enter diary mode
 /mode teach   - enter teaching mode
 /mode chat    - chat with Solace (requires 10 diary entries)
-/note <text>  - save a short note
-/todo ...     - manage tasks (add/list/done)
+/notes        - create a note
+/todo ...     - manage tasks (add/list/done/delete)
 /ask <q>      - search notes and diary
 /code <task>  - generate a code snippet
 /import <f>   - import facts from file
+/teach upload <file> - import facts from supported file
 /chat <msg>   - quick conversation
 /speak [txt]  - say text aloud
 /listen       - listen and process speech
@@ -78,11 +79,31 @@ def main():
             count = process_file(path)
             print(f'Imported {count} facts.')
             continue
-        if line.startswith('/note'):
-            note_text = line[len('/note'):].strip()
-            ts = _timestamp()
-            tags, imp = _tag_prompt()
-            add_note(note_text, ts, tags, imp)
+        if line.startswith('/teach upload'):
+            parts = line.split(maxsplit=2)
+            if len(parts) == 3:
+                filepath = parts[2]
+                count = process_file(filepath)
+                print(f'Imported {count} facts from {filepath}.')
+            else:
+                print('Usage: /teach upload <file>')
+            continue
+        if line.startswith('/notes'):
+            title = input('Title: ').strip()
+            date_in = input('Date (leave blank for now): ').strip()
+            ts = date_in if date_in else _timestamp()
+            tag_line = input('Tags (space separated, optional): ').strip()
+            tags = tag_line.split() if tag_line else []
+            content = input('Note content (end with blank line):\n')
+            lines = []
+            while True:
+                ln = input()
+                if not ln:
+                    break
+                lines.append(ln)
+            text = '\n'.join([content] + lines).strip()
+            enc = input('Encrypt? [y/N]: ').strip().lower().startswith('y')
+            add_note(title, text, ts, tags, enc)
             print('Note saved.')
             continue
         if line.startswith('/todo'):
@@ -94,26 +115,35 @@ def main():
             if cmd == 'add' and len(parts) == 3:
                 task_text = parts[2]
                 ts = _timestamp()
-                tags, imp = _tag_prompt()
-                item = add_task(task_text, ts, tags, imp)
-                print(f"Task {item['id']} added.")
+                item = add_task(task_text, ts)
+                print(f"Added: {item['task']}")
             elif cmd == 'list':
                 tasks = list_tasks()
-                for t in tasks:
-                    mark = 'x' if t['done'] else ' '
-                    print(f"[{mark}] {t['id']}: {t['task']}")
+                for i, t in enumerate(tasks):
+                    mark = 'x' if t['status'] == 'complete' else ' '
+                    print(f"[{mark}] {i}: {t['task']}")
             elif cmd == 'done' and len(parts) == 3:
                 try:
-                    tid = int(parts[2])
+                    idx = int(parts[2])
                 except ValueError:
-                    print('Invalid task id')
+                    print('Invalid id')
                 else:
-                    if mark_done(tid):
-                        print('Task marked done.')
+                    if mark_complete(idx):
+                        print('Task marked complete.')
+                    else:
+                        print('Task not found.')
+            elif cmd == 'delete' and len(parts) == 3:
+                try:
+                    idx = int(parts[2])
+                except ValueError:
+                    print('Invalid id')
+                else:
+                    if delete_task(idx):
+                        print('Task deleted.')
                     else:
                         print('Task not found.')
             else:
-                print('Usage: /todo add <task> | /todo list | /todo done <id>')
+                print('Usage: /todo add <task> | /todo list | /todo done <id> | /todo delete <id>')
             continue
         if line.startswith('/ask'):
             query = line[len('/ask'):].strip()
