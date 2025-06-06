@@ -5,17 +5,7 @@ import json
 import re
 from collections import Counter
 
-try:
-    import fitz  # PyMuPDF
-except Exception:  # noqa: PIE786
-    fitz = None
-
-try:
-    from ebooklib import epub  # type: ignore
-    from bs4 import BeautifulSoup  # type: ignore
-except Exception:  # noqa: PIE786
-    epub = None
-    BeautifulSoup = None
+from ..utils.filehandler import read_text
 
 DATA_FILE = Path(__file__).resolve().parents[2] / 'data' / 'facts_seed.json'
 
@@ -30,30 +20,7 @@ STOPWORDS = {
 
 def _read_text(path: Path) -> str:
     """Return the raw text from the supported file."""
-    if path.suffix in {'.txt', '.md', '.rst'}:
-        return path.read_text(encoding='utf-8')
-    if path.suffix == '.pdf':
-        if fitz is None:
-            raise RuntimeError('PyMuPDF is required to read PDF files')
-        text = []
-        doc = fitz.open(str(path))
-        try:
-            for page in doc:
-                text.append(page.get_text())
-        finally:
-            doc.close()
-        return '\n'.join(text)
-    if path.suffix == '.epub':
-        if epub is None or BeautifulSoup is None:
-            raise RuntimeError('ebooklib and beautifulsoup4 are required to read EPUB files')
-        book = epub.read_epub(str(path))
-        text = []
-        for item in book.get_items():
-            if item.get_type() == epub.ITEM_DOCUMENT:
-                soup = BeautifulSoup(item.get_content(), 'html.parser')
-                text.append(soup.get_text())
-        return '\n'.join(text)
-    raise ValueError('Unsupported file type')
+    return read_text(path)
 
 
 def _split_chunks(text: str) -> list[str]:
