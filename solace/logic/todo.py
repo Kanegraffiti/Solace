@@ -1,6 +1,8 @@
 import json
 from pathlib import Path
 from typing import List, Dict
+from ..utils.encryption import encrypt_bytes
+from ..utils.keys import get_key
 
 BASE_DIR = Path(__file__).resolve().parents[2] / 'storage' / 'todo'
 TODO_FILE = BASE_DIR / 'todo.json'
@@ -20,13 +22,20 @@ def _save(tasks: List[Dict]):
     TODO_FILE.write_text(json.dumps(tasks, indent=2), encoding='utf-8')
 
 
-def add_task(task: str, timestamp: str) -> Dict:
+def add_task(task: str, timestamp: str, private: bool = False) -> Dict:
     tasks = _load()
-    item = {'task': task, 'status': 'incomplete', 'added': timestamp}
+    item = {'task': task, 'status': 'incomplete', 'added': timestamp, 'private': private}
     tasks.append(item)
     _save(tasks)
-    snap = BASE_DIR / f"{timestamp.replace(':', '-').replace(' ', '_')}.json"
-    snap.write_text(json.dumps(item, indent=2), encoding='utf-8')
+    snap = BASE_DIR / timestamp.replace(':', '-').replace(' ', '_')
+    if private:
+        enc = encrypt_bytes(json.dumps(item, indent=2).encode('utf-8'), get_key())
+        snap = snap.with_suffix('.enc')
+        with snap.open('wb') as f:
+            f.write(enc)
+    else:
+        snap = snap.with_suffix('.json')
+        snap.write_text(json.dumps(item, indent=2), encoding='utf-8')
     return item
 
 
