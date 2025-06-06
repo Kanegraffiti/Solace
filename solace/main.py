@@ -5,13 +5,21 @@ from .logic.coder import generate_code
 from .logic.importer import process_file
 from .logic.asker import get_answer
 from .logic.converse import get_reply
+from .logic.notes import add_note, search_notes
+from .logic.todo import add_task, list_tasks, mark_done
+from .logic.recall import search as recall_search
+from datetime import datetime
+from .utils.datetime import request_timestamp
+from .config import ENABLE_TIMESTAMP_REQUEST, ENABLE_TAGGING
 from .utils.voice import speak, recognize_speech
 
 HELP_TEXT = """Commands:
 /mode diary   - enter diary mode
 /mode teach   - enter teaching mode
 /mode chat    - chat with Solace (requires 10 diary entries)
-/ask <q>      - ask a coding question
+/note <text>  - save a short note
+/todo ...     - manage tasks (add/list/done)
+/ask <q>      - search notes and diary
 /code <task>  - generate a code snippet
 /import <f>   - import facts from file
 /chat <msg>   - quick conversation
@@ -25,6 +33,25 @@ HELP_TEXT = """Commands:
 def main():
     current_mode = 'diary'
     print('Welcome to Solace. Type /help for commands.')
+
+    def _timestamp():
+        if ENABLE_TIMESTAMP_REQUEST:
+            return request_timestamp()
+        return datetime.now().strftime('%Y-%m-%d %H:%M')
+
+    def _tag_prompt():
+        tags = []
+        important = False
+        if ENABLE_TAGGING:
+            resp = input('Would you like to mark this as important or tag it for easy search later? [y/N]: ').strip().lower()
+            if resp.startswith('y'):
+                tag_line = input('Enter tags separated by space (optional): ').strip()
+                if tag_line:
+                    tags = tag_line.split()
+                imp = input('Mark as important? [y/N]: ').strip().lower()
+                if imp.startswith('y'):
+                    important = True
+        return tags, important
 
     while True:
         try:
@@ -51,11 +78,53 @@ def main():
             count = process_file(path)
             print(f'Imported {count} facts.')
             continue
+        if line.startswith('/note'):
+            note_text = line[len('/note'):].strip()
+            ts = _timestamp()
+            tags, imp = _tag_prompt()
+            add_note(note_text, ts, tags, imp)
+            print('Note saved.')
+            continue
+        if line.startswith('/todo'):
+            parts = line.split(maxsplit=2)
+            if len(parts) >= 2:
+                cmd = parts[1]
+            else:
+                cmd = ''
+            if cmd == 'add' and len(parts) == 3:
+                task_text = parts[2]
+                ts = _timestamp()
+                tags, imp = _tag_prompt()
+                item = add_task(task_text, ts, tags, imp)
+                print(f"Task {item['id']} added.")
+            elif cmd == 'list':
+                tasks = list_tasks()
+                for t in tasks:
+                    mark = 'x' if t['done'] else ' '
+                    print(f"[{mark}] {t['id']}: {t['task']}")
+            elif cmd == 'done' and len(parts) == 3:
+                try:
+                    tid = int(parts[2])
+                except ValueError:
+                    print('Invalid task id')
+                else:
+                    if mark_done(tid):
+                        print('Task marked done.')
+                    else:
+                        print('Task not found.')
+            else:
+                print('Usage: /todo add <task> | /todo list | /todo done <id>')
+            continue
         if line.startswith('/ask'):
-            question = line[len('/ask'):].strip()
-            response = get_answer(question)
-            print(response)
-            speak(response)
+            query = line[len('/ask'):].strip()
+            results = recall_search(query)
+            for r in results:
+                ts = r.get('timestamp', '')
+                print(f"[{ts}] {r.get('text', '')}")
+            if not results:
+                response = get_answer(query)
+                print(response)
+                speak(response)
             continue
         if line.startswith('/code'):
             task = line[len('/code'):].strip()
@@ -91,7 +160,9 @@ def main():
             continue
 
         if current_mode == 'diary':
-            mood = add_entry(line)
+            ts = _timestamp()
+            tags, imp = _tag_prompt()
+            mood = add_entry(line, ts, tags, imp)
             print(f'Entry saved. Detected mood: {mood}')
         elif current_mode == 'teach':
             if ':' in line:

@@ -1,0 +1,2 @@
+{"timestamp": "2023-01-01 09:00", "tags": ["project"], "important": false}
+Kickoff meeting notes
