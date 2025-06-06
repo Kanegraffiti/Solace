@@ -8,6 +8,7 @@ Solace is a lightweight offline companion that runs entirely in your terminal. I
 - **Chat mode** – after ten diary entries Solace can mimic your writing style for short conversations.
 - **Import** – pull notes from `.txt`, `.md`, `.rst`, `.pdf` or `.epub` files into the fact store (PDF/EPUB support requires optional packages).
 - **Voice** – optional text‑to‑speech and speech recognition if the necessary libraries are available.
+- **Private entries** – diary and knowledge items can be encrypted with a local key.
 
 ## Requirements
 - Python 3.10 or newer
@@ -27,12 +28,13 @@ Voice features rely on `pyttsx3`, `sounddevice` and `vosk`. These require system
    pip install -r requirements.txt
    bash solace/nltk-install.sh
    ```
-3. (Optional) Download a Vosk English model from [alphacephei.com/vosk/models](https://alphacephei.com/vosk/models) and extract it into `solace/models/` so that the path looks like `solace/models/vosk-model-small-en-us-0.15`.
-4. Run the program:
+3. The first private entry will generate `storage/keys/key.key`. Back this file up if you plan to encrypt notes.
+4. (Optional) Download a Vosk English model from [alphacephei.com/vosk/models](https://alphacephei.com/vosk/models) and extract it into `solace/models/` so that the path looks like `solace/models/vosk-model-small-en-us-0.15`.
+5. Run the program:
    ```bash
    python main.py
    ```
-5. Type `/help` inside the program to see the available commands.
+6. Type `/help` inside the program to see the available commands.
 
 ### Running on Termux (Android)
 1. Install Python: `pkg install python`.
