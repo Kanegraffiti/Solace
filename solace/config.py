@@ -7,7 +7,7 @@ DEFAULT_CONFIG = {
     "name": "",
     "pronouns": "",
     "default_mode": "diary",
-    "voice": False,
+    "voice_mode_enabled": True,
 }
 
 
@@ -28,7 +28,7 @@ def save_settings(data: dict) -> None:
 SETTINGS = load_settings()
 
 # voice toggle
-ENABLE_TTS = SETTINGS.get("voice", False)
+VOICE_MODE_ENABLED = SETTINGS.get("voice_mode_enabled", True)
 
 # new toggles for manual timestamp prompts and tagging features
 ENABLE_TIMESTAMP_REQUEST = True
