@@ -9,6 +9,9 @@ Solace is a lightweight offline companion that runs entirely in your terminal. I
 - **Import** – pull notes from `.txt`, `.md`, `.rst`, `.pdf` or `.epub` files into the fact store (PDF/EPUB support requires optional packages).
 - **Voice** – optional text‑to‑speech and speech recognition if the necessary libraries are available.
 - **Private entries** – diary and knowledge items can be encrypted with a local key.
+- **Memory tracker** – `/remember` and `/forget` manage personal reminders.
+- **Summary** – `/summary` shows how much you have taught Solace.
+- **Fallback log** – unanswered questions are stored for later review.
 
 ## Requirements
 - Python 3.10 or newer
@@ -35,6 +38,7 @@ Voice features rely on `pyttsx3`, `sounddevice` and `vosk`. These require system
    python main.py
    ```
 6. Type `/help` inside the program to see the available commands.
+7. Use `import_openbooks.py <file> <language>` to bulk add example code from cleaned tutorials.
 
 ### Running on Termux (Android)
 1. Install Python: `pkg install python`.
