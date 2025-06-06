@@ -1,4 +1,3 @@
-from .filetools import *
 from .storage import *
 try:
     from .voice import speak, recognize_speech

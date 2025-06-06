@@ -32,6 +32,11 @@ Voice features rely on `pyttsx3`, `sounddevice` and `vosk`. These require system
    pip install -r requirements.txt
    bash solace/nltk-install.sh
    ```
+   The helper script installs NLTK and optional libraries such as
+   `pdfplumber`, `ebooklib`, `markdown`, `docutils` and `beautifulsoup4`.
+   These are required for importing from PDF/EPUB files and for some text
+   processing features. If you skip this step Solace will still run, but
+   file import capabilities will be limited.
 3. The first private entry will generate `storage/keys/key.key`. Back this file up if you plan to encrypt notes.
 4. (Optional) Download a Vosk English model from [alphacephei.com/vosk/models](https://alphacephei.com/vosk/models) and extract it into `solace/models/` so that the path looks like `solace/models/vosk-model-small-en-us-0.15`.
 5. Run the program:
