@@ -1,5 +1,4 @@
 pyttsx3
 sounddevice
 speechrecognition
-pocketsphinx
 cryptography

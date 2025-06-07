@@ -23,11 +23,12 @@ Data files under `storage/` are created automatically at runtime. JSON files in 
 ## Installation for Development
 
 1. Install Python 3.10 or newer.
-2. Install dependencies:
+2. Install dependencies using the provided helper script:
    ```bash
-   pip install -r requirements.txt
+   bash install-safe.sh
    bash solace/nltk-install.sh
    ```
+   Extra packages for voice features are listed in `requirements-extra.txt`.
 3. Run the program from the project root:
    ```bash
    python main.py
