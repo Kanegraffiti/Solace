@@ -9,6 +9,7 @@ Solace is a calm command line companion for keeping a private diary and small kn
 * **Familiar writing style** – after several diary entries Solace can imitate your tone for short chats.
 * **Flexible storage** – save diary pages, markdown notes and coding snippets in one place.
 * **Optional voice mode** – text to speech and basic speech recognition are supported when the required packages are installed. Extra packages for voice features can be found in `requirements-extra.txt`.
+* **Customizable settings** – adjust themes, autosave and encryption with `/mode settings`, including optional password lock.
 
 ## Installation
 
@@ -28,7 +29,9 @@ Solace is a calm command line companion for keeping a private diary and small kn
    python main.py
    ```
 4. Type `/help` inside Solace to see all commands.
+5. Run `/mode settings` to customise Solace preferences at any time.
 
+Use `/unlock <file>` to read encrypted diary entries from the command line.
 Detailed usage instructions are available in [docs/user_guide.md](docs/user_guide.md).
 
 ## Project Structure

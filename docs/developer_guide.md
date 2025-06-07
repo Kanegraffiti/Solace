@@ -16,9 +16,11 @@ storage/
   diary/              # saved diary entries
   notes/              # markdown notes
   todo/               # todo items
+  settings/           # user preferences
 ```
 
 Data files under `storage/` are created automatically at runtime. JSON files in `data/` hold seed facts and conversation examples used by the program.
+User preferences are stored in `settings/settings.json` and can be changed at runtime with the `/mode settings` command.
 
 ## Installation for Development
 

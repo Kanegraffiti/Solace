@@ -20,6 +20,9 @@ All interactions happen through the command line. Commands begin with `/`.
 - `/memory` – Show items marked as “always remember” or “never bring up”.
 - `/summary` – Display how many entries and examples you have stored.
 - `/speak` – Speak text aloud if voice packages are installed.
+- `/unlock` – Decrypt a file saved by Solace.
+- `/demo` – Display a short demo sequence.
+- `/mode settings` – Configure Solace preferences.
 - `/help` – Show all available commands.
 - `/exit` – Quit the program.
 
