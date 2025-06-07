@@ -16,6 +16,7 @@ from .utils.datetime import prompt_timestamp
 from .utils.voice import speak
 from .utils.encryption import decrypt_bytes
 from .utils.keys import get_key
+from .config import SETTINGS, save_settings
 
 try:
     from rich.console import Console
@@ -44,6 +45,7 @@ HELP_TEXT = """Available commands:
 /speak [txt]  - speak text aloud
 /unlock <f>   - decrypt file
 /demo         - show a quick demo
+/mode settings- configure preferences
 /help         - show this help
 /exit         - exit program
 """
@@ -247,6 +249,79 @@ def cmd_demo(_: str) -> None:
     _cprint("Solace demo:\n- try /diary to record a thought\n- use /notes to save markdown notes\n- /todo helps track tasks\n- ask coding questions with /ask", "cyan")
 
 
+def _ask_yes_no(prompt: str, current: bool) -> bool:
+    default = "Y" if current else "N"
+    ans = input(f"{prompt} [y/n] ({default}): ").strip().lower()
+    if not ans:
+        return current
+    return ans.startswith("y")
+
+
+def _ask_choice(prompt: str, options: list[str], current: str) -> str:
+    opts = "/".join(options)
+    ans = input(f"{prompt} ({opts}) [{current}]: ").strip().lower()
+    return ans if ans in options else current
+
+
+def cmd_mode(args: str) -> None:
+    if args.strip().lower() != "settings":
+        _cprint("Usage: /mode settings", "yellow")
+        return
+    _cprint("Configure Solace settings. Leave blank to keep current values.", "cyan")
+    theme = _ask_choice("Theme", ["light", "dark"], SETTINGS.get("theme", "light"))
+    autosave = _ask_yes_no("Autosave", SETTINGS.get("autosave", True))
+    typing = _ask_yes_no("Typing effect", SETTINGS.get("typing_effect", True))
+    default = _ask_choice("Default mode", ["diary", "chat", "code"], SETTINGS.get("default_mode", "diary"))
+    encrypt = _ask_yes_no("Encrypt by default", SETTINGS.get("encryption", False))
+    plugins = _ask_yes_no("Allow plugins", SETTINGS.get("allow_plugins", False))
+    mimic = input(f"Mimic persona speaker name [{SETTINGS.get('mimic_persona','')}] : ").strip() or SETTINGS.get("mimic_persona", "")
+    use_pass = _ask_yes_no("Password lock", bool(SETTINGS.get("password_hash")))
+    pwd_hash = SETTINGS.get("password_hash", "")
+    hint = SETTINGS.get("password_hint", "")
+    if use_pass:
+        import getpass, hashlib
+        if not pwd_hash:
+            while True:
+                p1 = getpass.getpass("Set password: ")
+                p2 = getpass.getpass("Confirm password: ")
+                if p1 == p2:
+                    pwd_hash = hashlib.sha256(p1.encode("utf-8")).hexdigest()
+                    break
+                print("Passwords do not match.")
+            hint = input("Password hint (optional): ").strip()
+        else:
+            change = _ask_yes_no("Change password", False)
+            if change:
+                old = getpass.getpass("Current password: ")
+                if hashlib.sha256(old.encode("utf-8")).hexdigest() == pwd_hash:
+                    while True:
+                        n1 = getpass.getpass("New password: ")
+                        n2 = getpass.getpass("Confirm password: ")
+                        if n1 == n2:
+                            pwd_hash = hashlib.sha256(n1.encode("utf-8")).hexdigest()
+                            break
+                        print("Passwords do not match.")
+                    hint = input("Password hint (optional): ").strip()
+                else:
+                    print("Incorrect password. Keeping existing.")
+    else:
+        pwd_hash = ""
+        hint = ""
+    SETTINGS.update({
+        "theme": theme,
+        "autosave": autosave,
+        "typing_effect": typing,
+        "default_mode": default,
+        "encryption": encrypt,
+        "allow_plugins": plugins,
+        "mimic_persona": mimic,
+        "password_hash": pwd_hash,
+        "password_hint": hint,
+    })
+    save_settings(SETTINGS)
+    _cprint("Settings saved.", "green")
+
+
 COMMAND_MAP: Dict[str, CommandFunc] = {
     "help": cmd_help,
     "exit": cmd_exit,
@@ -262,6 +337,7 @@ COMMAND_MAP: Dict[str, CommandFunc] = {
     "speak": cmd_speak,
     "unlock": cmd_unlock,
     "demo": cmd_demo,
+    "mode": cmd_mode,
 }
 
 
