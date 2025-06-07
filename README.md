@@ -8,7 +8,7 @@ Solace is a calm command line companion for keeping a private diary and small kn
 * **Low resource** – works on Linux and Android (Termux) with minimal dependencies.
 * **Familiar writing style** – after several diary entries Solace can imitate your tone for short chats.
 * **Flexible storage** – save diary pages, markdown notes and coding snippets in one place.
-* **Optional voice mode** – text to speech and basic speech recognition are supported when the required packages are installed.
+* **Optional voice mode** – text to speech and basic speech recognition are supported when the required packages are installed. Extra packages for voice features can be found in `requirements-extra.txt`.
 
 ## Installation
 
@@ -17,11 +17,12 @@ Solace is a calm command line companion for keeping a private diary and small kn
    git clone <repo-url>
    cd Solace
    ```
-2. Install the Python dependencies:
+2. Install the Python dependencies (use the helper script for a resilient install):
    ```bash
-   pip install -r requirements.txt
+   bash install-safe.sh
    bash solace/nltk-install.sh
    ```
+   Optional packages for voice features are listed in `requirements-extra.txt`.
 3. Run the program:
    ```bash
    python main.py
