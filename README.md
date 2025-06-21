@@ -18,6 +18,16 @@ Solace is a calm command line companion for keeping a private diary and small kn
    git clone <repo-url>
    cd Solace
    ```
+   On Termux you may need to install some additional system packages first:
+   ```bash
+   pkg install -y python git espeak portaudio ffmpeg
+   ```
+   (You can run `bash termux-setup.sh` to automate the above.)
+   On Debian/Ubuntu based Linux systems you can use:
+   ```bash
+   sudo apt-get install -y python3 python3-pip espeak portaudio19-dev ffmpeg
+   ```
+   (Automated script: `bash linux-setup.sh`)
 2. Install the Python dependencies (use the helper script for a resilient install):
    ```bash
    bash install-safe.sh
@@ -49,4 +59,6 @@ storage/              # created at runtime for your entries and notes
 See [docs/developer_guide.md](docs/developer_guide.md) for more information on contributing or extending the project.
 
 Solace is intentionally minimal. Some features from the broader project plan—such as image attachments and advanced pattern tracking—are not implemented yet. Pull requests are welcome!
+
+Additional setup help is provided in [docs/termux_setup.md](docs/termux_setup.md) and [docs/linux_setup.md](docs/linux_setup.md).
 
