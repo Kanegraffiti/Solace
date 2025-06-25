@@ -39,7 +39,9 @@ Solace is a calm command line companion for keeping a private diary and small kn
    python main.py
    ```
 4. Type `/help` inside Solace to see all commands.
-5. Run `/mode settings` to customise Solace preferences at any time.
+5. Run `/mode settings` to customise Solace preferences at any time. See
+   [docs/settings.md](docs/settings.md) for details on each option and how to
+   reset the password if you ever forget it.
 
 Use `/unlock <file>` to read encrypted diary entries from the command line.
 Detailed usage instructions are available in [docs/user_guide.md](docs/user_guide.md).

@@ -10,4 +10,4 @@ The application supports three main modes:
 
 Data is stored as simple JSON files and text documents inside the `storage/` folder. Sensitive items can be encrypted with a local key. No internet connection is required after installation.
 
-Solace includes an interactive settings menu accessible with `/mode settings`. Here you can toggle themes, autosave, encryption and even set a password lock for the app.
+Solace includes an interactive settings menu accessible with `/mode settings`. Here you can toggle themes, autosave, encryption and even set a password lock for the app. See [settings.md](settings.md) for a complete list of options.
