@@ -10,6 +10,7 @@ from .logic.todo import add_task, list_tasks, mark_complete, delete_task
 from .logic.codegen import lookup as code_lookup, explain as code_explain, add_example
 from .logic.debugger import lookup as debug_lookup
 from .logic.memory import load_memory
+from .logic.recall import search as recall_search
 from .logic.summary import get_summary
 from .logic.fallback import log_query
 from .utils.datetime import prompt_timestamp
@@ -41,6 +42,7 @@ HELP_TEXT = """Available commands:
 /debug <err>  - search for error fix
 /teachcode    - teach a coding example
 /memory       - list remembered items
+/recall <q>   - search diary and notes
 /summary      - show data summary
 /speak [txt]  - speak text aloud
 /unlock <f>   - decrypt file
@@ -219,6 +221,24 @@ def cmd_memory(_: str) -> None:
         _cprint(" - " + m)
 
 
+def cmd_recall(args: str) -> None:
+    query = args or input("Search query: ").strip()
+    if not query:
+        _cprint("Please provide a search term or #tag", "yellow")
+        return
+    results = recall_search(query)
+    if not results:
+        _cprint("No matches found.", "yellow")
+        return
+    for item in results:
+        ts = item.get("timestamp", "")
+        title = item.get("title", "(untitled)")
+        tags = " ".join(item.get("tags", []))
+        snippet = item.get("text", "").splitlines()[0][:80]
+        _cprint(f"{ts} {title} [{tags}]", "green")
+        if snippet:
+            _cprint(f"  {snippet}")
+
 def cmd_summary(_: str) -> None:
     info = get_summary()
     _cprint(f"Diary entries: {info['diary']}")
@@ -333,6 +353,7 @@ COMMAND_MAP: Dict[str, CommandFunc] = {
     "debug": cmd_debug,
     "teachcode": cmd_teachcode,
     "memory": cmd_memory,
+    "recall": cmd_recall,
     "summary": cmd_summary,
     "speak": cmd_speak,
     "unlock": cmd_unlock,

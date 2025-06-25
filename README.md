@@ -8,6 +8,7 @@ Solace is a calm command line companion for keeping a private diary and small kn
 * **Low resource** – works on Linux and Android (Termux) with minimal dependencies.
 * **Familiar writing style** – after several diary entries Solace can imitate your tone for short chats.
 * **Flexible storage** – save diary pages, markdown notes and coding snippets in one place.
+* **Quick search** – find past entries or notes fast with the `/recall` command.
 * **Optional voice mode** – text to speech and basic speech recognition are supported when the required packages are installed. Extra packages for voice features can be found in `requirements-extra.txt`.
 * **Customizable settings** – adjust themes, autosave and encryption with `/mode settings`, including optional password lock.
 
