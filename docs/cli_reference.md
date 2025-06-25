@@ -12,6 +12,7 @@ Below is a quick list of the commands understood by Solace.
 | `/debug` | Look up known fixes for an error message. |
 | `/teachcode` | Teach a new code example. |
 | `/memory` | Display remembered facts. |
+| `/recall` | Search diary entries, notes and knowledge. |
 | `/summary` | Show data statistics. |
 | `/speak` | Speak text aloud (if available). |
 | `/unlock` | Decrypt a file. |
