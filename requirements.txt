@@ -2,3 +2,4 @@ pyttsx3
 sounddevice
 speechrecognition
 cryptography
+networkx
