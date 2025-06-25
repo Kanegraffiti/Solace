@@ -37,3 +37,11 @@ Encrypted entries are stored with the `.enc` extension. Keep the key file in `st
 Solace provides basic search with the `/recall` command. Type a keyword or `#tag` to list matching diary entries, notes or knowledge items.
 
 
+
+## Settings
+
+Use `/mode settings` to change your preferences.
+You can toggle autosave, typing effects, encryption defaults and more. The menu also lets you set a password lock for Solace. The password is stored as a hash alongside an optional hint.
+
+If you lose the password simply delete `settings/settings.json` to start over.
+
