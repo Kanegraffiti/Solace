@@ -22,6 +22,7 @@ All interactions happen through the command line. Commands begin with `/`.
 - `/speak` – Speak text aloud if voice packages are installed.
 - `/unlock` – Decrypt a file saved by Solace.
 - `/demo` – Display a short demo sequence.
+- `/install voice` – Install optional voice packages.
 - `/mode settings` – Configure Solace preferences.
 - `/help` – Show all available commands.
 - `/exit` – Quit the program.
