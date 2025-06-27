@@ -42,4 +42,12 @@ New commands can be added in `commands.py` by registering a function in `COMMAND
 
 Pull requests are welcome. Please keep the codebase simple and limit heavy dependencies to maintain compatibility with low resource devices.
 
+## Plugins
+
+Place Python files in `solace/plugins/` to extend functionality. Each plugin should expose a `register(cmd_map)` function that adds commands to the global map. Plugins are loaded automatically when `allow_plugins` is enabled in the settings.
+
+## Developer Mode
+
+Launch Solace with the `--dev` flag or create a `devmode.txt` file to populate dummy entries for testing the interface. This seeds a handful of diary entries, notes and todo items.
+
 

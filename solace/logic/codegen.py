@@ -35,6 +35,14 @@ def detect_language(text: str) -> str:
     return DEFAULT_LANGUAGE
 
 
+def _special_cases(text: str) -> Optional[Tuple[str, str]]:
+    """Return hard coded snippets for very common questions."""
+    t = text.lower()
+    if "reverse" in t and "string" in t and "python" in t:
+        return ("text[::-1]", "Use slicing with step -1 to reverse a string.")
+    return None
+
+
 def find_best_match(language: str, query: str) -> Optional[Dict]:
     examples = _load_examples(language)
     if not examples:
@@ -54,6 +62,9 @@ def find_best_match(language: str, query: str) -> Optional[Dict]:
 def lookup(text: str) -> Optional[Tuple[str, str]]:
     text = sanitize_input(text)
     lang = detect_language(text)
+    special = _special_cases(text)
+    if special:
+        return special
     match = find_best_match(lang, text)
     if not match:
         return None

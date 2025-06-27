@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import difflib
+import subprocess
 from pathlib import Path
 from typing import Callable, Dict, Optional
 
@@ -14,11 +15,14 @@ from .logic.recall import search as recall_search
 from .logic.summary import get_summary
 from .logic.fallback import log_query
 from .utils.datetime import prompt_timestamp
-from .utils.voice import speak
+from .utils.voice import speak, print_missing_packages
+from .logic.code_history import add_entry as _hist_add, find_similar
+from .logic.knowledge_index import add_entry as knowledge_add, get_all as knowledge_all
 from .utils.encryption import decrypt_bytes
 from .utils.keys import get_key
 from .config import SETTINGS, save_settings
 from .settings_manager import enable_encryption
+from .plugins import load_plugins
 
 try:
     from rich.console import Console
@@ -48,6 +52,7 @@ HELP_TEXT = """Available commands:
 /speak [txt]  - speak text aloud
 /unlock <f>   - decrypt file
 /demo         - show a quick demo
+/install voice- install voice packages
 /mode settings- configure preferences
 /help         - show this help
 /exit         - exit program
@@ -161,13 +166,21 @@ def _teach_missing(kind: str, query: str) -> None:
         code_text = "\n".join(lines)
         explanation = input("Explanation: ").strip()
         add_example(lang, desc, code_text, explanation)
+        knowledge_add(desc, lang, explanation, code_text, [])
         _cprint("Thanks, stored!", "green")
 
 
 def cmd_ask(args: str) -> Optional[str]:
+    cached = find_similar(args)
+    if cached:
+        _cprint(cached["code"])
+        _cprint(cached["explanation"])
+        return f"{cached['code']}\n{cached['explanation']}"
     result = code_explain(args)
     if result:
         code, expl = result
+        _hist_add(args, code, expl, "")
+        knowledge_add(args, "", expl, code, [])
         _cprint(code)
         _cprint(expl)
         return f"{code}\n{expl}"
@@ -176,9 +189,16 @@ def cmd_ask(args: str) -> Optional[str]:
 
 
 def cmd_code(args: str) -> Optional[str]:
+    cached = find_similar(args)
+    if cached:
+        _cprint(cached["code"])
+        _cprint(cached["explanation"])
+        return f"{cached['code']}\n{cached['explanation']}"
     result = code_lookup(args)
     if result:
         code, expl = result
+        _hist_add(args, code, expl, "")
+        knowledge_add(args, "", expl, code, [])
         _cprint(code)
         _cprint(expl)
         return f"{code}\n{expl}"
@@ -190,6 +210,7 @@ def cmd_debug(args: str) -> Optional[str]:
     fix = debug_lookup(args)
     if fix:
         _cprint(fix)
+        _hist_add(args, fix, "", "")
         return fix
     log_query("debug", args)
     _cprint("I don't know this error yet.", "yellow")
@@ -209,6 +230,8 @@ def cmd_teachcode(_: str) -> None:
     code_text = "\n".join(lines)
     explanation = input("Explanation: ").strip()
     add_example(lang, desc, code_text, explanation)
+    knowledge_add(desc, lang, explanation, code_text, [])
+    _hist_add(desc, code_text, explanation, lang)
     _cprint("Example saved.", "green")
 
 
@@ -220,6 +243,11 @@ def cmd_memory(_: str) -> None:
     _cprint("Never:")
     for m in mem.get("never", []):
         _cprint(" - " + m)
+    entries = knowledge_all()
+    if entries:
+        _cprint("Knowledge snippets:")
+        for item in entries[-5:]:
+            _cprint(f" - {item['topic']} ({item['language']})")
 
 
 def cmd_recall(args: str) -> None:
@@ -272,6 +300,26 @@ def cmd_unlock(args: str) -> None:
 
 def cmd_demo(_: str) -> None:
     _cprint("Solace demo:\n- try /diary to record a thought\n- use /notes to save markdown notes\n- /todo helps track tasks\n- ask coding questions with /ask", "cyan")
+
+
+def cmd_install(args: str) -> None:
+    """Install optional components like voice packages."""
+    if args.strip() == "voice":
+        _cprint("Installing voice packages...", "cyan")
+        try:
+            subprocess.check_call([
+                "pip",
+                "install",
+                "pyttsx3",
+                "sounddevice",
+                "speechrecognition",
+                "pocketsphinx",
+            ])
+            _cprint("Installation complete. Restart Solace to use voice features.", "green")
+        except Exception:
+            _cprint("Installation failed. Try installing manually with pip.", "red")
+    else:
+        _cprint("Usage: /install voice", "yellow")
 
 
 def cmd_repair(_: str) -> None:
@@ -379,6 +427,7 @@ COMMAND_MAP: Dict[str, CommandFunc] = {
     "speak": cmd_speak,
     "unlock": cmd_unlock,
     "demo": cmd_demo,
+    "install": cmd_install,
     "repair": cmd_repair,
     "mode": cmd_mode,
 }

@@ -6,6 +6,7 @@ from getpass import getpass
 import json
 
 from .notes import load_notes
+from .knowledge_index import get_all as load_knowledge_index
 from ..settings_manager import SETTINGS
 from ..utils.crypto_manager import decrypt_data
 from ..utils.keys import get_key
@@ -86,7 +87,12 @@ def _load_knowledge_entries(password: str | None = None) -> List[Dict]:
 def search(query: str, password: str | None = None) -> List[Dict]:
     q = query.lower()
     results: List[Dict] = []
-    sources = _load_diary_entries(password) + _load_knowledge_entries(password) + load_notes()
+    sources = (
+        _load_diary_entries(password)
+        + _load_knowledge_entries(password)
+        + load_notes()
+        + load_knowledge_index()
+    )
     for item in sources:
         text = item.get('text', '').lower()
         tags = [t.lower() for t in item.get('tags', [])]

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime
+import sys
 from . import commands
 from .commands import dispatch
 from .config import CONFIG_FILE, DEFAULT_MODE, SETTINGS, save_settings, verify_password
@@ -10,6 +11,11 @@ from .logic.notes import add_note
 from .logic.codegen import lookup as code_lookup
 from .logic.fallback import log_query
 from .utils.datetime import prompt_timestamp
+from .devmode import enabled as dev_enabled, populate as dev_populate
+from .plugins import load_plugins
+from .logic.code_history import add_entry as _hist_add, find_similar
+from .logic.knowledge_index import add_entry as knowledge_add
+from .utils.voice import print_missing_packages
 
 
 def _setup() -> None:
@@ -75,6 +81,13 @@ def main() -> None:
         _setup()
     else:
         verify_password(SETTINGS)
+    if dev_enabled(sys.argv):
+        dev_populate()
+        print("[Dev mode] Dummy data loaded.")
+    if SETTINGS.get("allow_plugins"):
+        load_plugins()
+    if SETTINGS.get("voice_mode_enabled"):
+        print_missing_packages()
     mode = SETTINGS.get("default_mode", DEFAULT_MODE)
     print("Welcome to Solace. Type /help for commands.")
     last_response = ""
@@ -106,9 +119,16 @@ def main() -> None:
             except ChatLockedError as e:
                 print(e)
         elif mode == "code":
+            cached = find_similar(line)
+            if cached:
+                print(cached["code"])
+                print(cached["explanation"])
+                continue
             result = code_lookup(line)
             if result:
                 code, expl = result
+                _hist_add(line, code, expl, "")
+                knowledge_add(line, "", expl, code, [])
                 print(code)
                 print(expl)
             else:
