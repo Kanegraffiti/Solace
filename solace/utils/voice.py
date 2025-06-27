@@ -8,6 +8,7 @@ try:
 except Exception:  # noqa: PIE786
     pyttsx3 = None
 
+
 try:
     sd = importlib.import_module('sounddevice')
 except Exception:  # noqa: PIE786
@@ -30,6 +31,30 @@ try:
 except Exception:  # noqa: PIE786
     VOICE_RECOGNITION_AVAILABLE = False
 
+
+def missing_packages() -> list[str]:
+    """Return a list of required voice packages that are not installed."""
+    missing = []
+    if pyttsx3 is None:
+        missing.append("pyttsx3")
+    if sd is None:
+        missing.append("sounddevice")
+    if sr is None:
+        missing.append("speechrecognition")
+    try:
+        import pocketsphinx  # noqa: F401
+    except Exception:
+        missing.append("pocketsphinx")
+    return missing
+
+
+def print_missing_packages() -> None:
+    """Print a helpful message about missing voice packages."""
+    miss = missing_packages()
+    if miss:
+        print("Missing voice packages: " + ", ".join(miss))
+        print("Run /install voice to install them.")
+
 from ..config import VOICE_MODE_ENABLED
 
 
@@ -48,7 +73,10 @@ def _get_engine():
 
 def speak_text(text: str) -> None:
     """Speak the given text using pyttsx3 if available."""
-    if not VOICE_MODE_ENABLED or pyttsx3 is None:
+    if not VOICE_MODE_ENABLED:
+        return
+    if pyttsx3 is None:
+        print("pyttsx3 is missing. Install voice packages with /install voice.")
         return
     try:
         engine = _get_engine()
@@ -68,7 +96,7 @@ def recognize_speech(duration: int = 5) -> str | None:
         print("Voice recognition is not available on this system.")
         return None
     if sd is None or sr is None:
-        print("Voice recognition is not available on this system.")
+        print("Missing speech packages. Install with /install voice.")
         return None
     samplerate = 16000
     try:
@@ -83,4 +111,5 @@ def recognize_speech(duration: int = 5) -> str | None:
     except Exception as e:  # noqa: BLE001
         print(f"Speech recognition error: {e}")
         return None
+
 
