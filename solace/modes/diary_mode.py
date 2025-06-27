@@ -4,8 +4,10 @@ from pathlib import Path
 from ..utils.storage import load_entries, save_entries
 from ..logic.emotion import detect_mood
 from ..utils.datetime import ts_to_filename
-from ..utils.encryption import encrypt_bytes
-from ..utils.keys import get_key
+from getpass import getpass
+
+from ..settings_manager import SETTINGS
+from ..utils.crypto_manager import encrypt_data
 
 
 def add_entry(text: str, timestamp: str, tags=None, important=False, private=False):
@@ -24,12 +26,14 @@ def add_entry(text: str, timestamp: str, tags=None, important=False, private=Fal
         'mood': mood,
     }
     fname = diary_dir / ts_to_filename(timestamp)
-    if private:
+    use_enc = SETTINGS.get("encryption_enabled", False) or private
+    if use_enc:
         data = json.dumps(meta) + '\n' + text
-        enc = encrypt_bytes(data.encode('utf-8'), get_key())
-        fname = fname.with_suffix('.enc')
-        with fname.open('wb') as f:
-            f.write(enc)
+        password = getpass("Encryption password: ")
+        token = encrypt_data(data, password)
+        fname = fname.with_suffix('.solace')
+        with fname.open('w', encoding='utf-8') as f:
+            json.dump({"version": 1, "data": token}, f)
     else:
         fname = fname.with_suffix('.txt')
         with fname.open('w', encoding='utf-8') as f:
