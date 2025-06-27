@@ -11,7 +11,7 @@ from .fallback import count_fallbacks
 def count_diary_entries() -> int:
     if not DIARY_DIR.exists():
         return 0
-    return len(list(DIARY_DIR.glob('*')))
+    return len(list(DIARY_DIR.glob('*.txt'))) + len(list(DIARY_DIR.glob('*.solace'))) + len(list(DIARY_DIR.glob('*.enc')))
 
 
 def count_examples() -> int:

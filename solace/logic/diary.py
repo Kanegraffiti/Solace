@@ -1,14 +1,19 @@
 from pathlib import Path
 from typing import Iterable, List
+import json
 
+from getpass import getpass
+
+from ..settings_manager import SETTINGS
+from ..utils.crypto_manager import encrypt_data, decrypt_data
 from ..utils.datetime import ts_to_filename
-from ..utils.encryption import encrypt_bytes, decrypt_bytes
-from ..utils.keys import get_key
 from ..utils.storage import DIARY_DIR, update_tags_index
 
 
 def save_entry(title: str, timestamp: str, mood: str, content: str,
-               tags: Iterable[str] | None = None, private: bool = False) -> Path:
+               tags: Iterable[str] | None = None,
+               private: bool = False,
+               password: str | None = None) -> Path:
     """Save a diary entry. Returns the file path."""
     DIARY_DIR.mkdir(parents=True, exist_ok=True)
     tags = list(tags or [])
@@ -23,12 +28,14 @@ def save_entry(title: str, timestamp: str, mood: str, content: str,
         content,
     ]
     text = "\n".join(header)
-    if private:
-        key = get_key()
-        data = encrypt_bytes(text.encode('utf-8'), key)
-        fname = fname.with_suffix('.enc')
-        with fname.open('wb') as f:
-            f.write(data)
+    use_enc = SETTINGS.get("encryption_enabled", False) or private
+    if use_enc:
+        if password is None:
+            password = getpass("Encryption password: ")
+        token = encrypt_data(text, password)
+        fname = fname.with_suffix('.solace')
+        with fname.open('w', encoding='utf-8') as f:
+            json.dump({"version": 1, "data": token}, f)
     else:
         fname = fname.with_suffix('.txt')
         with fname.open('w', encoding='utf-8') as f:
@@ -37,13 +44,24 @@ def save_entry(title: str, timestamp: str, mood: str, content: str,
     return fname
 
 
-def load_entry(path: Path, key: bytes | None = None) -> dict:
+def load_entry(path: Path, password: str | None = None) -> dict:
     """Load a diary entry from ``path``."""
-    if path.suffix == '.enc':
-        key = key or get_key()
-        data = decrypt_bytes(path.read_bytes(), key).decode('utf-8')
+    if path.suffix == '.solace':
+        try:
+            obj = json.loads(path.read_text(encoding="utf-8"))
+            enc = obj.get("data", "")
+            if password is None:
+                password = getpass("Encryption password: ")
+            data = decrypt_data(enc, password)
+        except Exception:
+            raise ValueError(f"Failed to decrypt {path.name}")
+    elif path.suffix == '.enc':
+        from ..utils.keys import get_key  # legacy
+        from ..utils.encryption import decrypt_bytes
+        key = get_key()
+        data = decrypt_bytes(path.read_bytes(), key).decode("utf-8")
     else:
-        data = path.read_text(encoding='utf-8')
+        data = path.read_text(encoding="utf-8")
     lines = data.splitlines()
     meta = {
         'title': '',
@@ -66,3 +84,22 @@ def load_entry(path: Path, key: bytes | None = None) -> dict:
             break
     meta['content'] = '\n'.join(lines[body_start:]).strip()
     return meta
+
+
+def migrate_unencrypted(password: str) -> int:
+    """Encrypt legacy plain-text diary entries."""
+    count = 0
+    for path in DIARY_DIR.glob('*.txt'):
+        entry = load_entry(path)
+        save_entry(
+            entry.get('title', ''),
+            entry.get('timestamp', ''),
+            entry.get('mood', ''),
+            entry.get('content', ''),
+            entry.get('tags', []),
+            private=True,
+            password=password,
+        )
+        path.unlink()
+        count += 1
+    return count

@@ -18,6 +18,7 @@ from .utils.voice import speak
 from .utils.encryption import decrypt_bytes
 from .utils.keys import get_key
 from .config import SETTINGS, save_settings
+from .settings_manager import enable_encryption
 
 try:
     from rich.console import Console
@@ -226,7 +227,11 @@ def cmd_recall(args: str) -> None:
     if not query:
         _cprint("Please provide a search term or #tag", "yellow")
         return
-    results = recall_search(query)
+    pwd = None
+    if SETTINGS.get("encryption_enabled"):
+        import getpass
+        pwd = getpass.getpass("Encryption password: ")
+    results = recall_search(query, pwd)
     if not results:
         _cprint("No matches found.", "yellow")
         return
@@ -269,6 +274,18 @@ def cmd_demo(_: str) -> None:
     _cprint("Solace demo:\n- try /diary to record a thought\n- use /notes to save markdown notes\n- /todo helps track tasks\n- ask coding questions with /ask", "cyan")
 
 
+def cmd_repair(_: str) -> None:
+    if not SETTINGS.get("encryption_enabled"):
+        _cprint("Encryption is not enabled.", "yellow")
+        return
+    import getpass
+    pwd = getpass.getpass("Encryption password: ")
+    from .logic.diary import migrate_unencrypted as mig_diary
+    from .logic.knowledge import migrate_unencrypted as mig_kn
+    total = mig_diary(pwd) + mig_kn(pwd)
+    _cprint(f"Re-encrypted {total} entries", "green")
+
+
 def _ask_yes_no(prompt: str, current: bool) -> bool:
     default = "Y" if current else "N"
     ans = input(f"{prompt} [y/n] ({default}): ").strip().lower()
@@ -293,6 +310,7 @@ def cmd_mode(args: str) -> None:
     typing = _ask_yes_no("Typing effect", SETTINGS.get("typing_effect", True))
     default = _ask_choice("Default mode", ["diary", "chat", "code"], SETTINGS.get("default_mode", "diary"))
     encrypt = _ask_yes_no("Encrypt by default", SETTINGS.get("encryption", False))
+    enc_sys = _ask_yes_no("Enable encryption system", SETTINGS.get("encryption_enabled", False))
     plugins = _ask_yes_no("Allow plugins", SETTINGS.get("allow_plugins", False))
     mimic = input(f"Mimic persona speaker name [{SETTINGS.get('mimic_persona','')}] : ").strip() or SETTINGS.get("mimic_persona", "")
     use_pass = _ask_yes_no("Password lock", bool(SETTINGS.get("password_hash")))
@@ -333,11 +351,14 @@ def cmd_mode(args: str) -> None:
         "typing_effect": typing,
         "default_mode": default,
         "encryption": encrypt,
+        "encryption_enabled": enc_sys,
         "allow_plugins": plugins,
         "mimic_persona": mimic,
         "password_hash": pwd_hash,
         "password_hint": hint,
     })
+    if enc_sys and not SETTINGS.get("salt"):
+        enable_encryption()
     save_settings(SETTINGS)
     _cprint("Settings saved.", "green")
 
@@ -358,6 +379,7 @@ COMMAND_MAP: Dict[str, CommandFunc] = {
     "speak": cmd_speak,
     "unlock": cmd_unlock,
     "demo": cmd_demo,
+    "repair": cmd_repair,
     "mode": cmd_mode,
 }
 
