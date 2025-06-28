@@ -23,7 +23,10 @@ def _setup() -> None:
     name = input("What is your name? ").strip()
     pronouns = input("Your pronouns: ").strip()
     mode = input("Preferred default mode (diary/chat/code): ").strip() or "diary"
-    voice_mode = input("Enable voice mode? (y/n): ").strip().lower().startswith("y")
+    tts = input("Enable text to speech? (y/n) [y]: ").strip().lower()
+    tts_enabled = (tts == "" or tts.startswith("y"))
+    stt = input("Enable speech recognition? (y/n) [n]: ").strip().lower()
+    stt_enabled = stt.startswith("y")
     theme = input("Theme (light/dark) [light]: ").strip().lower() or "light"
     autosave = input("Enable autosave? (y/n) [y]: ").strip().lower()
     autosave_bool = (autosave.startswith("y") or autosave == "")
@@ -50,7 +53,9 @@ def _setup() -> None:
         "name": name,
         "pronouns": pronouns,
         "default_mode": mode,
-        "voice_mode_enabled": voice_mode,
+        "voice_mode_enabled": tts_enabled or stt_enabled,
+        "enable_tts": tts_enabled,
+        "enable_stt": stt_enabled,
         "theme": theme,
         "autosave": autosave_bool,
         "typing_effect": typing_bool,
@@ -61,7 +66,7 @@ def _setup() -> None:
         "password_hint": password_hint,
     }
     save_settings(cfg)
-    if voice_mode:
+    if tts_enabled or stt_enabled:
         from .utils.envcheck import check_voice_dependencies
         check_voice_dependencies()
     _demo_seed()
@@ -81,12 +86,17 @@ def main() -> None:
         _setup()
     else:
         verify_password(SETTINGS)
+    args = sys.argv[1:]
+    if "--speak" in args:
+        SETTINGS["enable_tts"] = True
+    if "--listen" in args:
+        SETTINGS["enable_stt"] = True
     if dev_enabled(sys.argv):
         dev_populate()
         print("[Dev mode] Dummy data loaded.")
     if SETTINGS.get("allow_plugins"):
         load_plugins()
-    if SETTINGS.get("voice_mode_enabled"):
+    if SETTINGS.get("enable_tts") or SETTINGS.get("enable_stt"):
         print_missing_packages()
     mode = SETTINGS.get("default_mode", DEFAULT_MODE)
     print("Welcome to Solace. Type /help for commands.")

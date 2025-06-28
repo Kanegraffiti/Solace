@@ -41,8 +41,9 @@ Solace is a portable command line companion for journaling, note taking and mana
    ```
 3. Launch the application:
    ```bash
-   solace
+   solace [--speak] [--listen]
    ```
+   The optional flags temporarily enable text-to-speech or speech recognition even if disabled in the settings.
 4. Type `/help` inside Solace to see all commands and `/mode settings` to customise preferences. See [docs/settings.md](docs/settings.md) for details.
 
 Use `/unlock <file>` to decrypt diary entries from the command line. The full user guide lives in [docs/user_guide.md](docs/user_guide.md).

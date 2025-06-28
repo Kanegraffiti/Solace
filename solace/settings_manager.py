@@ -15,12 +15,15 @@ DEFAULT_SETTINGS: Dict[str, Any] = {
     "pronouns": "",
     "default_mode": "diary",
     "voice_mode_enabled": True,
+    "enable_tts": True,
+    "enable_stt": False,
     "theme": "light",
     "autosave": True,
     "typing_effect": True,
     "encryption": False,
     "allow_plugins": False,
     "mimic_persona": "",
+    "password_enabled": False,
     "password_hash": "",
     "password_hint": "",
     "encryption_enabled": False,
@@ -29,12 +32,14 @@ DEFAULT_SETTINGS: Dict[str, Any] = {
 
 
 def load_settings() -> Dict[str, Any]:
+    data = DEFAULT_SETTINGS.copy()
     if SETTINGS_FILE.exists():
         try:
-            return json.loads(SETTINGS_FILE.read_text(encoding="utf-8"))
+            stored = json.loads(SETTINGS_FILE.read_text(encoding="utf-8"))
         except json.JSONDecodeError:
-            pass
-    return DEFAULT_SETTINGS.copy()
+            stored = {}
+        data.update(stored)
+    return data
 
 
 def save_settings(data: Dict[str, Any]) -> None:

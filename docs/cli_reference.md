@@ -1,6 +1,8 @@
 # CLI Reference
 
-Below is a quick list of the commands understood by Solace.
+Below is a quick list of the commands understood by Solace. The program can also
+be launched with `--speak` or `--listen` to temporarily enable text-to-speech or
+speech recognition.
 
 | Command | Description |
 | ------- | ----------- |

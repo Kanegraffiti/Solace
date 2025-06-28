@@ -25,7 +25,7 @@ except Exception:  # noqa: PIE786
     publish_string = None
 
 
-SUPPORTED_SUFFIXES = {'.txt', '.md', '.rst', '.pdf', '.epub'}
+SUPPORTED_SUFFIXES = {'.txt', '.md', '.rst', '.pdf', '.epub', '.py'}
 
 
 def is_supported(path: Path) -> bool:
@@ -37,6 +37,8 @@ def read_text(path: Path) -> str:
     """Read text from the supported ``path``."""
     suf = path.suffix.lower()
     if suf == '.txt':
+        return path.read_text(encoding='utf-8')
+    if suf == '.py':
         return path.read_text(encoding='utf-8')
     if suf == '.md':
         if markdown is None:
