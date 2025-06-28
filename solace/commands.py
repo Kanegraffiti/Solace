@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import difflib
+import os
 import subprocess
 from pathlib import Path
 from typing import Callable, Dict, Optional
@@ -16,6 +17,7 @@ from .logic.summary import get_summary
 from .logic.fallback import log_query
 from .utils.datetime import prompt_timestamp
 from .utils.voice import speak, print_missing_packages
+from .utils.filehandler import read_text, is_supported
 from .logic.code_history import add_entry as _hist_add, find_similar
 from .logic.knowledge_index import add_entry as knowledge_add, get_all as knowledge_all
 from .utils.encryption import decrypt_bytes
@@ -70,17 +72,66 @@ def cmd_exit(_: str) -> str:
     return None
 
 
+def _resolve_location(location: str) -> Path:
+    """Return a Path for ``location`` handling Android storage quirks."""
+    base = Path(location).expanduser()
+    if base.exists():
+        return base
+    if "ANDROID_STORAGE" in os.environ:
+        alt = Path("/storage/emulated/0") / location
+        if alt.exists():
+            return alt
+        alt_shared = Path.home() / "storage" / "shared" / location
+        if alt_shared.exists():
+            return alt_shared
+    return base
+
+
+def _prompt_document_text() -> Optional[str]:
+    """Prompt the user for a document and return its text."""
+    while True:
+        name = input("Document name (with extension): ").strip()
+        if not name:
+            _cprint("Please provide a document name.", "yellow")
+            continue
+        loc = input("Document location (directory): ").strip() or "."
+        base = _resolve_location(loc)
+        path = base / name
+        if not path.exists():
+            _cprint("File not found. Check the name and location.", "red")
+            retry = input("Try again? (y/N): ").strip().lower()
+            if retry.startswith("y"):
+                continue
+            return None
+        if not is_supported(path):
+            _cprint("Unsupported document type.", "red")
+            return None
+        try:
+            return read_text(path)
+        except Exception as exc:  # noqa: BLE001
+            _cprint(f"Error reading file: {exc}", "red")
+            return None
+
+
 def cmd_diary(args: str) -> None:
     text = args
     if not text:
-        _cprint("Enter diary text (end with blank line):", "cyan")
-        lines = []
-        while True:
-            ln = input()
-            if not ln:
-                break
-            lines.append(ln)
-        text = "\n".join(lines)
+        mode = input("Type entry or import document? [type/import]: ").strip().lower()
+        if mode.startswith("i"):
+            doc_text = _prompt_document_text()
+            if doc_text is None:
+                _cprint("Entry cancelled.", "yellow")
+                return
+            text = doc_text
+        else:
+            _cprint("Enter diary text (end with blank line):", "cyan")
+            lines = []
+            while True:
+                ln = input()
+                if not ln:
+                    break
+                lines.append(ln)
+            text = "\n".join(lines)
     ts = prompt_timestamp()
     tag_line = input("Tags (space separated, optional): ").strip()
     tags = tag_line.split() if tag_line else []
@@ -92,14 +143,22 @@ def cmd_diary(args: str) -> None:
 
 def cmd_notes(_: str) -> None:
     title = input("Title: ").strip()
-    _cprint("Enter note text (end with blank line):", "cyan")
-    lines = []
-    while True:
-        ln = input()
-        if not ln:
-            break
-        lines.append(ln)
-    text = "\n".join(lines)
+    mode = input("Type note or import document? [type/import]: ").strip().lower()
+    if mode.startswith("i"):
+        doc_text = _prompt_document_text()
+        if doc_text is None:
+            _cprint("Note cancelled.", "yellow")
+            return
+        text = doc_text
+    else:
+        _cprint("Enter note text (end with blank line):", "cyan")
+        lines = []
+        while True:
+            ln = input()
+            if not ln:
+                break
+            lines.append(ln)
+        text = "\n".join(lines)
     ts = prompt_timestamp()
     tag_line = input("Tags (space separated, optional): ").strip()
     tags = tag_line.split() if tag_line else []
@@ -220,14 +279,22 @@ def cmd_debug(args: str) -> Optional[str]:
 def cmd_teachcode(_: str) -> None:
     lang = input("Language: ").strip()
     desc = input("Description: ").strip()
-    _cprint("Enter code (end with blank line):", "cyan")
-    lines = []
-    while True:
-        ln = input()
-        if not ln:
-            break
-        lines.append(ln)
-    code_text = "\n".join(lines)
+    mode = input("Type code or import document? [type/import]: ").strip().lower()
+    if mode.startswith("i"):
+        doc_text = _prompt_document_text()
+        if doc_text is None:
+            _cprint("Example cancelled.", "yellow")
+            return
+        code_text = doc_text
+    else:
+        _cprint("Enter code (end with blank line):", "cyan")
+        lines = []
+        while True:
+            ln = input()
+            if not ln:
+                break
+            lines.append(ln)
+        code_text = "\n".join(lines)
     explanation = input("Explanation: ").strip()
     add_example(lang, desc, code_text, explanation)
     knowledge_add(desc, lang, explanation, code_text, [])
