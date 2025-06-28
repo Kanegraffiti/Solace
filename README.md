@@ -4,7 +4,7 @@
 
 # Solace
 
-Solace is a calm command line companion for journaling, note taking and managing a small knowledge base. Everything runs offline so your private thoughts stay on your device. The tool is designed for neurodivergent users, journalers and anyone who wants a distraction free interface.
+Solace is a command line companion for journaling, note taking and managing a small knowledge base. Everything runs offline so your private thoughts stay on your device. The tool is designed for neurodivergent users, journalers and anyone who wants a distraction free interface.
 
 ## Key Features
 
@@ -20,7 +20,7 @@ Solace is a calm command line companion for journaling, note taking and managing
 
 1. Clone this repository and run the installer:
    ```bash
-   git clone <repo-url>
+   git clone https://github.com/Kanegraffiti/Solace.git
    cd Solace
    bash install.sh
    ```
@@ -45,7 +45,7 @@ Solace is a calm command line companion for journaling, note taking and managing
 
 Use `/unlock <file>` to decrypt diary entries from the command line. The full user guide lives in [docs/user_guide.md](docs/user_guide.md).
 
-## Project Structure
+## Project Screenshots
 ```text
 solace/
   main.py             # command loop and startup logic
