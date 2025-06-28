@@ -10,13 +10,13 @@ All interactions happen through the command line. Commands begin with `/`.
 
 ## Common Commands
 
-- `/diary` – Add a new diary entry. You will be prompted for tags and whether the entry should be encrypted.
-- `/notes` – Write a short markdown note with optional tags.
+- `/diary` – Add a new diary entry or import a document. You will be prompted for tags and whether the entry should be encrypted.
+- `/notes` – Write a short markdown note or import a document with optional tags.
 - `/todo` – Manage a small todo list. Use `add`, `list`, `done` and `delete` subcommands.
 - `/ask` – Ask how to perform a coding task. Solace searches its stored examples and responds if it knows the answer.
 - `/code` – Generate a code snippet from stored examples.
 - `/debug` – Search for solutions to known error messages.
-- `/teachcode` – Add a new code example for later reference.
+- `/teachcode` – Add a new code example or import a document containing code.
 - `/memory` – Show items marked as “always remember” or “never bring up”.
 - `/summary` – Display how many entries and examples you have stored.
 - `/speak` – Speak text aloud if voice packages are installed.
@@ -30,6 +30,7 @@ All interactions happen through the command line. Commands begin with `/`.
 ### Adding Entries
 
 When you run `/diary` without text after it, Solace opens a multiline prompt. Finish by entering a blank line. Each entry is saved with a timestamp and a simple mood detected from keywords.
+You can also choose to import a supported document (`.txt`, `.md`, `.rst`, `.pdf`, `.epub`) instead of typing.
 
 Encrypted entries are stored with the `.enc` extension. Keep the key file in `storage/.key` safe if you use encryption.
 
