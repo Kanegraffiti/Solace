@@ -15,6 +15,8 @@ Solace is a command line companion for journaling, note taking and managing a sm
 * **Search everything** – quickly find past entries, notes or facts with the `/recall` command.
 * **Optional voice mode** – basic text to speech and speech recognition are supported when extra packages are installed.
 * **Customisable settings** – adjust themes, autosave, encryption and more in `/mode settings`, including an optional password lock.
+* **Extensible via plugins** – drop Python files in `solace/plugins` and enable them through the settings menu.
+* **Cross‑platform CLI** – launch Solace with the `solace` command on Linux, Windows or Termux.
 
 ## Installation
 
@@ -24,7 +26,7 @@ Solace is a command line companion for journaling, note taking and managing a sm
    cd Solace
    bash install.sh
    ```
-   This creates a virtual environment and installs dependencies with retry logic. The script also sets up a global `solace` command so you can start the program from anywhere.
+   This creates a virtual environment and installs dependencies with retry logic. The installer also sets up a cross‑platform `solace` command so you can start the program from any shell.
    On Termux you may need system packages first:
    ```bash
    pkg install -y python git espeak portaudio ffmpeg
