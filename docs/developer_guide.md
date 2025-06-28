@@ -25,9 +25,9 @@ User preferences are stored in `settings/settings.json` and can be changed at ru
 ## Installation for Development
 
 1. Install Python 3.10 or newer.
-2. Install dependencies using the provided helper script:
+2. Install dependencies using the unified installer:
    ```bash
-   bash install-safe.sh
+   bash setup/install.sh
    bash solace/nltk-install.sh
    ```
    Extra packages for voice features are listed in `requirements-extra.txt`.

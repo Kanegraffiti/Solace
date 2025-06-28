@@ -4,5 +4,5 @@
 pkg update -y
 pkg install -y python git espeak portaudio ffmpeg
 
-echo "System packages installed. You can now run bash install-safe.sh"
+echo "System packages installed. You can now run bash setup/install.sh"
 

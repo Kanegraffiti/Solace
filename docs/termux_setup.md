@@ -1,12 +1,12 @@
 # Termux Setup
 
-These commands install the system dependencies required for Solace on Termux.
-Run them before installing the Python packages.
+The main installer handles Termux dependencies automatically. If you prefer
+to set things up manually run:
 
 ```bash
 pkg update -y
 pkg install -y python git espeak portaudio ffmpeg
 ```
 
-After that run `bash install-safe.sh` from the project directory.
+After that run `bash setup/install.sh` from the project directory.
 

@@ -15,4 +15,5 @@ exit 0
 fi
 
 SCRIPT_DIR="$(dirname "$(readlink -f "$0")")"
-exec "$SCRIPT_DIR/.venv/bin/python" "$SCRIPT_DIR/main.py" "$@"
+ROOT_DIR="$(dirname "$SCRIPT_DIR")"
+exec "$SCRIPT_DIR/.venv/bin/python" "$ROOT_DIR/main.py" "$@"
