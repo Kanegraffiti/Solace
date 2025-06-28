@@ -10,7 +10,7 @@ Below is a quick list of the commands understood by Solace.
 | `/ask`   | Ask about a coding concept. |
 | `/code`  | Retrieve a stored code snippet. |
 | `/debug` | Look up known fixes for an error message. |
-| `/teachcode` | Teach a new code example or import code from a document. |
+| `/teachcode` | Teach a new code example or import code from a document. Code blocks are detected automatically when importing. |
 | `/memory` | Display remembered facts. |
 | `/recall` | Search diary entries, notes and knowledge. |
 | `/summary` | Show data statistics. |

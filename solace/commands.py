@@ -9,13 +9,18 @@ from typing import Callable, Dict, Optional
 from .modes.diary_mode import add_entry
 from .logic.notes import add_note
 from .logic.todo import add_task, list_tasks, mark_complete, delete_task
-from .logic.codegen import lookup as code_lookup, explain as code_explain, add_example
+from .logic.codegen import (
+    lookup as code_lookup,
+    explain as code_explain,
+    add_example,
+)
 from .logic.debugger import lookup as debug_lookup
 from .logic.memory import load_memory
 from .logic.recall import search as recall_search
 from .logic.summary import get_summary
 from .logic.fallback import log_query
 from .utils.datetime import prompt_timestamp
+from .utils.code_extract import extract_code_blocks
 from .utils.voice import speak, print_missing_packages
 from .utils.filehandler import read_text, is_supported
 from .logic.code_history import add_entry as _hist_add, find_similar
@@ -229,6 +234,17 @@ def _teach_missing(kind: str, query: str) -> None:
         _cprint("Thanks, stored!", "green")
 
 
+def _feedback(_: str) -> None:
+    """Ask the user if the provided answer solved their problem."""
+    ans = input("Did it work? (y/n): ").strip().lower()
+    if ans.startswith("y"):
+        return
+    _cprint("I'm sorry to hear that, can I try again or would you like to teach me?", "yellow")
+    follow = input("[press Enter to skip/teach]: ").strip().lower()
+    if follow.startswith("teach"):
+        cmd_teachcode("")
+
+
 def cmd_ask(args: str) -> Optional[str]:
     cached = find_similar(args)
     if cached:
@@ -242,6 +258,7 @@ def cmd_ask(args: str) -> Optional[str]:
         knowledge_add(args, "", expl, code, [])
         _cprint(code)
         _cprint(expl)
+        _feedback(args)
         return f"{code}\n{expl}"
     _teach_missing("ask", args)
     return None
@@ -260,6 +277,7 @@ def cmd_code(args: str) -> Optional[str]:
         knowledge_add(args, "", expl, code, [])
         _cprint(code)
         _cprint(expl)
+        _feedback(args)
         return f"{code}\n{expl}"
     _teach_missing("code", args)
     return None
@@ -270,6 +288,7 @@ def cmd_debug(args: str) -> Optional[str]:
     if fix:
         _cprint(fix)
         _hist_add(args, fix, "", "")
+        _feedback(args)
         return fix
     log_query("debug", args)
     _cprint("I don't know this error yet.", "yellow")
@@ -278,27 +297,36 @@ def cmd_debug(args: str) -> Optional[str]:
 
 def cmd_teachcode(_: str) -> None:
     lang = input("Language: ").strip()
-    desc = input("Description: ").strip()
     mode = input("Type code or import document? [type/import]: ").strip().lower()
+    snippets: list[str] = []
+    desc = ""
     if mode.startswith("i"):
         doc_text = _prompt_document_text()
         if doc_text is None:
             _cprint("Example cancelled.", "yellow")
             return
-        code_text = doc_text
+        snippets = extract_code_blocks(doc_text)
+        if not snippets:
+            _cprint("No code found in document.", "yellow")
+            return
     else:
+        desc = input("Description: ").strip()
         _cprint("Enter code (end with blank line):", "cyan")
-        lines = []
+        lines: list[str] = []
         while True:
             ln = input()
             if not ln:
                 break
             lines.append(ln)
         code_text = "\n".join(lines)
-    explanation = input("Explanation: ").strip()
-    add_example(lang, desc, code_text, explanation)
-    knowledge_add(desc, lang, explanation, code_text, [])
-    _hist_add(desc, code_text, explanation, lang)
+        snippets = [code_text]
+
+    for idx, code_text in enumerate(snippets, 1):
+        snippet_desc = input(f"Description for snippet {idx}: ").strip() if mode.startswith("i") else desc
+        explanation = input(f"Explanation for snippet {idx}: ").strip()
+        add_example(lang, snippet_desc, code_text, explanation)
+        knowledge_add(snippet_desc, lang, explanation, code_text, [])
+        _hist_add(snippet_desc, code_text, explanation, lang)
     _cprint("Example saved.", "green")
 
 
