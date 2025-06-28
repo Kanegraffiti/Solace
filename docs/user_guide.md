@@ -16,7 +16,7 @@ All interactions happen through the command line. Commands begin with `/`.
 - `/ask` – Ask how to perform a coding task. Solace searches its stored examples and responds if it knows the answer.
 - `/code` – Generate a code snippet from stored examples.
 - `/debug` – Search for solutions to known error messages.
-- `/teachcode` – Add a new code example or import a document containing code.
+- `/teachcode` – Add a new code example or import a document containing code. When importing, Solace automatically extracts fenced code blocks.
 - `/memory` – Show items marked as “always remember” or “never bring up”.
 - `/summary` – Display how many entries and examples you have stored.
 - `/speak` – Speak text aloud if voice packages are installed.
@@ -26,6 +26,8 @@ All interactions happen through the command line. Commands begin with `/`.
 - `/mode settings` – Configure Solace preferences.
 - `/help` – Show all available commands.
 - `/exit` – Quit the program.
+
+After answering a coding question with `/ask`, `/code` or `/debug` Solace now asks “Did it work?”. If you reply no you can choose to teach the correct solution via `/teachcode`.
 
 ### Adding Entries
 
