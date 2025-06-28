@@ -1,7 +1,7 @@
 #!/bin/bash
 # Resilient installation of Python requirements
 
-REQ_FILE="requirements.txt"
+REQ_FILE="$(dirname "$0")/../requirements.txt"
 LOCAL_DIR=""
 
 if [ "$1" = "--local-dir" ] && [ -n "$2" ]; then
@@ -30,6 +30,6 @@ if [ -f "$FAILED_LOG" ]; then
     rm "$FAILED_LOG.tmp"
 fi
 
-if [ -f "requirements-extra.txt" ]; then
+if [ -f "$(dirname "$0")/../requirements-extra.txt" ]; then
     echo "Optional packages listed in requirements-extra.txt were skipped."
 fi

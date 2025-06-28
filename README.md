@@ -24,17 +24,9 @@ Solace is a portable command line companion for journaling, note taking and mana
    ```bash
    git clone https://github.com/Kanegraffiti/Solace.git
    cd Solace
-   bash install.sh
+   bash setup/install.sh
    ```
-   This creates a virtual environment and installs dependencies with retry logic. The installer also sets up a cross‑platform `solace` command so you can start the program from any shell.
-   On Termux you may need system packages first:
-   ```bash
-   pkg install -y python git espeak portaudio ffmpeg
-   ```
-   On Debian/Ubuntu based systems you can use:
-   ```bash
-   sudo apt-get install -y python3 python3-pip espeak portaudio19-dev ffmpeg
-   ```
+   The script detects your platform and installs any required system packages before setting up a cross‑platform `solace` command.
 2. If needed run the NLTK installer for offline speech models:
    ```bash
    bash solace/nltk-install.sh

@@ -5,8 +5,10 @@
 # and sets up a global 'solace' command.
 
 set -e
+trap 'echo "Installation failed" >&2' ERR
 
 REPO_DIR="$(cd "$(dirname "$0")" && pwd)"
+ROOT_DIR="$(dirname "$REPO_DIR")"
 VENV_DIR="$REPO_DIR/.venv"
 PIP="$VENV_DIR/bin/pip"
 PYTHON="$VENV_DIR/bin/python"
@@ -15,11 +17,32 @@ PYTHON="$VENV_DIR/bin/python"
 ENV_TYPE="linux"
 if command -v termux-info >/dev/null 2>&1; then
     ENV_TYPE="termux"
-elif [[ "$(uname -o 2>/dev/null)" =~ Msys|Cygwin ]]; then
+elif [[ "$(uname -o 2>/dev/null)" =~ Msys|Cygwin ]] || [[ "$(uname -s)" == *NT* ]]; then
     ENV_TYPE="windows"
 fi
 
 echo "Detected environment: $ENV_TYPE"
+
+install_system_packages() {
+    case "$ENV_TYPE" in
+        linux)
+            if command -v apt-get >/dev/null 2>&1; then
+                echo "Installing system packages..."
+                sudo apt-get update
+                sudo apt-get install -y python3 python3-pip espeak portaudio19-dev ffmpeg
+            fi
+            ;;
+        termux)
+            echo "Installing system packages..."
+            pkg update -y
+            pkg install -y python git espeak portaudio ffmpeg
+            ;;
+        *)
+            echo "Ensure Python 3 is installed on your system." ;;
+    esac
+}
+
+install_system_packages
 
 echo "Creating virtual environment..."
 if [ ! -d "$VENV_DIR" ]; then
@@ -94,4 +117,11 @@ LAUNCHER_SETUP="$REPO_DIR/setup_cli.py"
 chmod +x "$REPO_DIR/solace.sh"
 echo "Setting up launcher script..."
 $PYTHON "$LAUNCHER_SETUP"
-echo "Installation complete. Now you can run Solace from anywhere using: solace"
+echo "Installation complete."
+
+read -rp "Restart your shell now to enable the 'solace' command? [y/N] " ans
+if [[ "$ans" =~ ^[Yy]$ ]]; then
+    exec "$SHELL" -l
+else
+    echo "Restart your terminal later to use the 'solace' command."
+fi

@@ -1,11 +1,12 @@
 # Linux Setup
 
-For Debian or Ubuntu based systems install the following packages before running the Python installers:
+The unified installer installs these packages automatically on Debian/Ubuntu systems.
+To set them up manually run:
 
 ```bash
 sudo apt-get update
 sudo apt-get install -y python3 python3-pip espeak portaudio19-dev ffmpeg
 ```
 
-Then run `bash install-safe.sh` from the project directory.
+Then run `bash setup/install.sh` from the project directory.
 
