@@ -11,6 +11,8 @@ DEFAULT_CONFIG = {
     "pronouns": "",
     "default_mode": "diary",
     "voice_mode_enabled": True,
+    "enable_tts": True,
+    "enable_stt": False,
     "theme": "light",
     "autosave": True,
     "typing_effect": True,
@@ -23,12 +25,14 @@ DEFAULT_CONFIG = {
 
 
 def load_settings() -> dict:
+    data = DEFAULT_CONFIG.copy()
     if CONFIG_FILE.exists():
         try:
-            return json.loads(CONFIG_FILE.read_text(encoding="utf-8"))
+            stored = json.loads(CONFIG_FILE.read_text(encoding="utf-8"))
         except json.JSONDecodeError:
-            pass
-    return DEFAULT_CONFIG.copy()
+            stored = {}
+        data.update(stored)
+    return data
 
 
 def save_settings(data: dict) -> None:
@@ -57,7 +61,7 @@ def verify_password(settings: dict) -> None:
 SETTINGS = load_settings()
 
 # voice toggle
-VOICE_MODE_ENABLED = SETTINGS.get("voice_mode_enabled", True)
+VOICE_MODE_ENABLED = SETTINGS.get("enable_tts", True) or SETTINGS.get("enable_stt", False)
 
 # new toggles for manual timestamp prompts and tagging features
 ENABLE_TIMESTAMP_REQUEST = True

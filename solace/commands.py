@@ -29,7 +29,6 @@ from .utils.encryption import decrypt_bytes
 from .utils.keys import get_key
 from .config import SETTINGS, save_settings
 from .settings_manager import enable_encryption
-from .plugins import load_plugins
 
 try:
     from rich.console import Console

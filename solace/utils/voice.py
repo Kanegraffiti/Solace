@@ -55,7 +55,7 @@ def print_missing_packages() -> None:
         print("Missing voice packages: " + ", ".join(miss))
         print("Run /install voice to install them.")
 
-from ..config import VOICE_MODE_ENABLED
+from ..settings_manager import SETTINGS
 
 
 _engine = None
@@ -71,9 +71,9 @@ def _get_engine():
     return _engine
 
 
-def speak_text(text: str) -> None:
+def _speak_text(text: str) -> None:
     """Speak the given text using pyttsx3 if available."""
-    if not VOICE_MODE_ENABLED:
+    if not SETTINGS.get("enable_tts", True):
         return
     if pyttsx3 is None:
         print("pyttsx3 is missing. Install voice packages with /install voice.")
@@ -87,12 +87,30 @@ def speak_text(text: str) -> None:
 
 
 # backward compatibility
-speak = speak_text
+
+class VoiceEngine:
+    """Simple wrapper providing TTS and STT with graceful fallbacks."""
+
+    def __init__(self, enable_tts: bool | None = None, enable_stt: bool | None = None) -> None:
+        self.enable_tts = SETTINGS.get("enable_tts", True) if enable_tts is None else enable_tts
+        self.enable_stt = SETTINGS.get("enable_stt", False) if enable_stt is None else enable_stt
+
+    def speak(self, text: str) -> None:
+        if not self.enable_tts:
+            return
+        _speak_text(text)
+
+    def listen(self, duration: int = 5) -> str | None:
+        if not self.enable_stt:
+            return None
+        return recognize_speech(duration)
+
+speak = _speak_text
 
 
 def recognize_speech(duration: int = 5) -> str | None:
     """Listen from microphone and return recognized text using PocketSphinx."""
-    if not VOICE_MODE_ENABLED or not VOICE_RECOGNITION_AVAILABLE:
+    if not SETTINGS.get("enable_stt", False) or not VOICE_RECOGNITION_AVAILABLE:
         print("Voice recognition is not available on this system.")
         return None
     if sd is None or sr is None:

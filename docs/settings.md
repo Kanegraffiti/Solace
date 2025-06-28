@@ -14,6 +14,8 @@ Available options:
 - **Allow plugins** – permit loading third‑party plugin modules.
 - **Mimic persona** – speaker name for imitation mode.
 - **Password lock** – require a password when starting Solace. The password is hashed before being stored. A hint can be saved to help you remember it.
+- **Enable TTS** – toggle text-to-speech responses.
+- **Enable STT** – toggle speech recognition for the `/listen` command.
 
 If you forget the password you can remove `settings/settings.json` to reset all preferences.
 
