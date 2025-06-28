@@ -3,7 +3,7 @@
 This guide introduces the basic commands available in Solace. Start the program with:
 
 ```bash
-python main.py
+solace
 ```
 
 All interactions happen through the command line. Commands begin with `/`.

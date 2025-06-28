@@ -31,9 +31,9 @@ User preferences are stored in `settings/settings.json` and can be changed at ru
    bash solace/nltk-install.sh
    ```
    Extra packages for voice features are listed in `requirements-extra.txt`.
-3. Run the program from the project root:
+3. Run the program from the project root using the installed launcher or directly with Python during development:
    ```bash
-   python main.py
+   solace  # or `python main.py`
    ```
 
 ## Contributing
