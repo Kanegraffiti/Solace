@@ -90,27 +90,8 @@ PY
     fi
 fi
 
-LAUNCHER="$REPO_DIR/solace.sh"
-chmod +x "$LAUNCHER"
-
-# Install launcher globally
-TARGET=""
-if [ "$ENV_TYPE" = "termux" ]; then
-    TARGET="$PREFIX/bin/solace"
-else
-    if [ -w /usr/local/bin ]; then
-        TARGET="/usr/local/bin/solace"
-    else
-        TARGET="$HOME/.local/bin/solace"
-        mkdir -p "$HOME/.local/bin"
-    fi
-fi
-
-if ln -s "$LAUNCHER" "$TARGET" 2>/dev/null; then
-    echo "Symlinked launcher to $TARGET"
-else
-    cp "$LAUNCHER" "$TARGET"
-    echo "Copied launcher to $TARGET"
-fi
-
+LAUNCHER_SETUP="$REPO_DIR/setup_cli.py"
+chmod +x "$REPO_DIR/solace.sh"
+echo "Setting up launcher script..."
+$PYTHON "$LAUNCHER_SETUP"
 echo "Installation complete. Now you can run Solace from anywhere using: solace"
