@@ -4,7 +4,7 @@
 
 # Solace
 
-Solace is a command line companion for journaling, note taking and managing a small knowledge base. Everything runs offline so your private thoughts stay on your device. The tool is designed for neurodivergent users, journalers and anyone who wants a distraction free interface.
+Solace is a portable command line companion for journaling, note taking and managing a small, personal knowledge base. Everything runs offline so your private thoughts stay on your device. 
 
 ## Key Features
 
@@ -48,16 +48,9 @@ Solace is a command line companion for journaling, note taking and managing a sm
 Use `/unlock <file>` to decrypt diary entries from the command line. The full user guide lives in [docs/user_guide.md](docs/user_guide.md).
 
 ## Project Screenshots
-```text
-solace/
-  main.py             # command loop and startup logic
-  commands.py         # command handlers
-  modes/              # diary, teaching and chat modes
-  logic/              # diary storage, notes, code examples, helpers
-  utils/              # encryption, voice and file utilities
-  models/             # optional speech model data
-storage/              # created at runtime for your entries and notes
-```
+<p align="center">
+  <img src="assets/interface1.png" alt="Solace Screenshots" style="width:100%;max-width:100%;height:auto;" />
+</p>
 
 See [docs/developer_guide.md](docs/developer_guide.md) for information on contributing or extending the project.
 
