@@ -19,11 +19,11 @@ All interactions happen through the command line. Commands begin with `/`.
 - `/teachcode` – Add a new code example or import a document containing code. When importing, Solace automatically extracts fenced code blocks.
 - `/memory` – Show items marked as “always remember” or “never bring up”.
 - `/summary` – Display how many entries and examples you have stored.
+- `/mode settings` – Update preferences and choose diary, chat or code as the default mode.
 - `/speak` – Speak text aloud if voice packages are installed.
 - `/unlock` – Decrypt a file saved by Solace.
 - `/demo` – Display a short demo sequence.
 - `/install voice` – Install optional voice packages.
-- `/mode settings` – Configure Solace preferences.
 - `/help` – Show all available commands.
 - `/exit` – Quit the program.
 
@@ -39,6 +39,13 @@ Encrypted entries are stored with the `.enc` extension. Keep the key file in `st
 ### Searching
 
 Solace provides basic search with the `/recall` command. Type a keyword or `#tag` to list matching diary entries, notes or knowledge items.
+
+
+### Unlocking Your Digital Clone
+
+Solace starts in diary mode so it can learn your voice. After you save ten or more diary entries the `/chat` experience unlocks and the assistant responds using phrases, topics and moods gathered from your journal. Until then chat is unavailable and Solace will remind you how many entries are needed.
+
+Once unlocked the clone keeps evolving: every new diary entry updates its sense of your favourite themes, signature sentences and emotional tone. Open `/mode settings` if you want to make chat the default mode when Solace starts.
 
 
 

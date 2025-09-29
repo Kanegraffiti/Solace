@@ -1,16 +1,16 @@
-from ..utils.storage import load_entries
-from ..logic.mimic import mimic_reply
+from ..logic.mimic import MIN_CLONE_ENTRIES, build_profile, mimic_reply
 
 
 class ChatLockedError(Exception):
-    pass
-
-
-MIN_ENTRIES = 10
+    def __init__(self, message: str, entry_count: int, required: int) -> None:
+        super().__init__(message)
+        self.entry_count = entry_count
+        self.required = required
 
 
 def chat(prompt: str) -> str:
-    entries = load_entries()
-    if len(entries) < MIN_ENTRIES:
-        raise ChatLockedError('Not enough diary entries to unlock chat.')
-    return mimic_reply(prompt)
+    profile = build_profile()
+    if not profile.ready:
+        message = profile.incubation_message or "Not enough diary entries to unlock chat."
+        raise ChatLockedError(message, profile.entry_count, MIN_CLONE_ENTRIES)
+    return mimic_reply(prompt, profile)
