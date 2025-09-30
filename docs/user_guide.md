@@ -1,58 +1,68 @@
 # User Guide
 
-This guide introduces the basic commands available in Solace. Start the program with:
+Start Solace from your terminal:
 
 ```bash
 solace
 ```
 
-All interactions happen through the command line. Commands begin with `/`.
+All commands begin with a `/` prefix. If you simply type text and press enter, Solace treats it as a diary entry.
 
-## Common Commands
+## Journaling commands
 
-- `/diary` – Add a new diary entry or import a document. You will be prompted for tags and whether the entry should be encrypted.
-- `/notes` – Write a short markdown note or import a document with optional tags.
-- `/todo` – Manage a small todo list. Use `add`, `list`, `done` and `delete` subcommands.
-- `/ask` – Ask how to perform a coding task. Solace searches its stored examples and responds if it knows the answer.
-- `/code` – Generate a code snippet from stored examples.
-- `/debug` – Search for solutions to known error messages.
-- `/teachcode` – Add a new code example or import a document containing code. When importing, Solace automatically extracts fenced code blocks.
-- `/memory` – Show items marked as “always remember” or “never bring up”.
-- `/summary` – Display how many entries and examples you have stored.
-- `/mode settings` – Update preferences and choose diary, chat or code as the default mode.
-- `/speak` – Speak text aloud if voice packages are installed.
-- `/unlock` – Decrypt a file saved by Solace.
-- `/demo` – Display a short demo sequence.
-- `/install voice` – Install optional voice packages.
-- `/help` – Show all available commands.
-- `/exit` – Quit the program.
+- `/diary [text]` – capture a diary entry. If you omit the text Solace opens a multiline prompt. You will be asked for the date/time and optional comma-separated tags.
+- `/notes [text]` – store study or project notes with the same prompts.
+- `/todo [text]` – record a to-do reminder.
+- `/quote [text]` – save quotes or inspiration.
 
-After answering a coding question with `/ask`, `/code` or `/debug` Solace now asks “Did it work?”. If you reply no you can choose to teach the correct solution via `/teachcode`.
+Each command writes to a shared JSON file under `~/.solace/journal/entries.json`. When encryption is enabled the body is stored using Fernet and decrypted automatically after you enter your password.
 
-### Adding Entries
+You can also start an entry with `:diary`, `:notes`, `:todo` or `:quote` followed by text without the slash command.
 
-When you run `/diary` without text after it, Solace opens a multiline prompt. Finish by entering a blank line. Each entry is saved with a timestamp and a simple mood detected from keywords.
-You can also choose to import a supported document (`.txt`, `.md`, `.rst`, `.pdf`, `.epub`) instead of typing.
+## Searching your writing
 
-Encrypted entries are stored with the `.enc` extension. Keep the key file in `storage/.key` safe if you use encryption.
+Use `/search <keywords>` to look through existing entries. The search considers both content and tags and will return the best matches with a similarity score.
 
-### Searching
+## Exporting
 
-Solace provides basic search with the `/recall` command. Type a keyword or `#tag` to list matching diary entries, notes or knowledge items.
+`/export [markdown|pdf] [path]` creates a Markdown (`.md`) or PDF snapshot of all entries. When no path is provided Solace stores the export inside the journal folder.
 
+## Training snippets
 
-### Unlocking Your Digital Clone
+The training system keeps language-tagged snippets that you curate manually:
 
-Solace starts in diary mode so it can learn your voice. After you save ten or more diary entries the `/chat` experience unlocks and the assistant responds using phrases, topics and moods gathered from your journal. Until then chat is unavailable and Solace will remind you how many entries are needed.
+- `/teach <language> [text]` – add a code example, tip or error note. When text is omitted a multiline prompt appears and you can classify the snippet as an example, error or tip.
+- `/remember <language> <query>` – list stored snippets whose text matches the query.
+- `/code <language> <keyword>` – similar to `/remember` but renders code using syntax highlighting.
 
-Once unlocked the clone keeps evolving: every new diary entry updates its sense of your favourite themes, signature sentences and emotional tone. Open `/mode settings` if you want to make chat the default mode when Solace starts.
+Snippets live in `~/.solace/training/` along with a JSON index and timestamped session logs created by `trainer.record_session`.
 
+## Mimic replies
 
+`/mimic <text>` runs the rule-based responder. Solace compares your text against triggers stored in `~/.solace/conversation/guide.json` and replies with the closest match, falling back to a simple apology or encouragement depending on the configured fallback mode.
+
+## Voice helpers
+
+If the optional voice dependencies are installed you can toggle text-to-speech and speech recognition under `/settings voice`. Once enabled:
+
+- Solace speaks key confirmations via the text-to-speech engine.
+- `/listen` captures a short utterance using PocketSphinx and prints the recognised text.
 
 ## Settings
 
-Use `/mode settings` to change your preferences.
-You can toggle autosave, typing effects, encryption defaults and more. The menu also lets you set a password lock for Solace. The password is stored as a hash alongside an optional hint.
+Run `/settings` to see available subcommands:
 
-If you lose the password simply delete `settings/settings.json` to start over.
+- `password` – configure or remove the startup password.
+- `voice` – enable or disable text-to-speech (TTS) and speech-to-text (STT).
+- `tone <friendly|quiet|verbose>` – change how verbose mimic responses are.
+- `alias <name>` – update the stored launcher name.
+- `backup` – create a zip archive of your Solace storage directory.
+- `restore <archive>` – unpack a previously created archive.
+- `info` – display paths and the current version.
+- `fallback <mode>` – set the mimic fallback response (e.g. `apologise`, `gentle`, `encourage`).
 
+All settings are saved to `~/.solaceconfig.json`. The storage directory is created automatically if it does not already exist.
+
+## Leaving Solace
+
+Type `/exit`, `exit`, `quit` or use `Ctrl+C`/`Ctrl+D` to close the program. A simple session log is kept inside `~/.solace/session.log`.

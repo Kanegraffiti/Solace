@@ -1,15 +1,15 @@
 # Solace Overview
 
-Solace is a lightweight command line diary and knowledge assistant. It was designed with privacy in mind so all data lives locally on your device. The project is aimed at neurodivergent users and anyone who wants an offline place to collect their thoughts.
+Solace is a text-first command line assistant centred on journaling and lightweight personal knowledge management. Everything runs offline: configuration lives in `~/.solaceconfig.json` and content is written to `~/.solace/` inside your home directory.
 
-The application supports three main modes:
+The application focuses on three areas:
 
-- **Diary mode** – capture daily entries and tag them with optional moods or keywords.
-- **Teaching mode** – store facts, code snippets or reference material for quick lookup.
-- **Chat mode** – once enough diary text has been collected Solace can imitate your writing style for short conversations.
+- **Journaling** – capture dated diary, note, todo and quote entries that are stored as JSON. Entries can be encrypted when Solace is configured with a password.
+- **Memory search** – query past writing with `/search`, which performs fuzzy matching across text and tags to resurface relevant memories.
+- **Teaching snippets** – curate language-tagged examples using `/teach`, then revisit them through `/remember` or `/code` when you need a refresher.
 
-Data is stored as simple JSON files and text documents inside the `storage/` folder. Sensitive items can be encrypted with a local key. No internet connection is required after installation.
+Data is intentionally simple so it can be inspected or backed up manually. Journal entries are appended to `entries.json`, training snippets sit under `~/.solace/training`, and the mimic guide is a small JSON file that you can edit to customise responses.
 
-Solace includes an interactive settings menu accessible with `/mode settings`. Here you can toggle themes, autosave, encryption and even set a password lock for the app. See [settings.md](settings.md) for a complete list of options.
+The `/settings` command provides quick switches for password protection, voice options, tone, alias name and backup helpers. See [settings.md](settings.md) for command details.
 
-The installer creates a `solace` command that works on Linux, Windows and Termux so you can launch the assistant from any terminal. Enabling `allow_plugins` lets you extend Solace with custom commands stored in `solace/plugins`.
+Solace ships as a single-terminal experience: run it, type `/help` to view commands, and keep writing. There is no web UI, sync service or analytics.

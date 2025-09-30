@@ -1,55 +1,48 @@
 # Developer Guide
 
-This document describes the project layout and how to extend Solace.
+This document outlines the current project structure and suggests starting points for contributors.
 
-## Directory Layout
+## Repository layout
 
 ```
+README.md
+main.py                # interactive CLI entry point
+journal.py             # journal storage helpers
+mimic.py               # rule-based conversational replies
+trainer.py             # training snippet manager
 solace/
-  main.py             # application entry point
-  commands.py         # command dispatch and CLI helpers
-  modes/              # diary, teaching and chat modes
-  logic/              # modules for diary storage, notes, code examples and more
-  utils/              # helper functions (encryption, voice, file handling)
-  models/             # optional speech models
-storage/
-  diary/              # saved diary entries
-  notes/              # markdown notes
-  todo/               # todo items
-  settings/           # user preferences
+  __init__.py
+  configuration.py     # config handling, encryption helpers
+  memory.py            # fuzzy search across entries
+assets/                # images used in documentation
+setup/                 # legacy shell installer scripts
+storage/               # sample data used for testing
 ```
 
-Data files under `storage/` are created automatically at runtime. JSON files in `data/` hold seed facts and conversation examples used by the program.
-User preferences are stored in `settings/settings.json` and can be changed at runtime with the `/mode settings` command.
+Solace persists user data outside the repository in `~/.solace/` and keeps configuration in `~/.solaceconfig.json`. These paths are created on first run or by the installer.
 
-## Installation for Development
+## Running the app during development
 
-1. Install Python 3.10 or newer.
-2. Install dependencies using the unified installer:
-   ```bash
-   bash setup/install.sh
-   bash solace/nltk-install.sh
-   ```
-   Extra packages for voice features are listed in `requirements-extra.txt`.
-3. Run the program from the project root using the installed launcher or directly with Python during development:
-   ```bash
-   solace  # or `python main.py`
-   ```
+1. Create a virtual environment and install dependencies from `requirements.txt` (and `requirements-extra.txt` if you need voice features).
+2. Run `python install.py --skip-deps` to create a launcher and initial config without reinstalling packages, or execute `python main.py` directly while developing.
+3. Use `/help` inside the program to see available commands.
 
-## Contributing
+## Key modules
 
-New commands can be added in `commands.py` by registering a function in `COMMAND_MAP`. Features such as diary storage or note parsing live in the `logic/` package.
+- `journal.py` exposes functions to add, load and export entries. It relies on `solace.configuration` for storage paths and encryption.
+- `trainer.py` manages the language-indexed knowledge snippets. The JSON index is rebuilt as needed and session notes are saved for reference.
+- `mimic.py` loads a simple JSON rule set from the conversation storage directory and scores user input using `difflib.SequenceMatcher`.
+- `solace/memory.py` implements the fuzzy search used by `/search`.
+- `solace/configuration.py` centralises config I/O, password prompts, key derivation and helper utilities shared across modules.
 
-The digital clone is implemented in `logic/mimic.py`. The module analyses diary entries to extract recurring themes, a dominant mood and a handful of representative sentences. Chat mode stays locked until at least ten entries are available; once unlocked the persona snapshot is rebuilt each time new entries are saved.
+## Extending Solace
 
-Pull requests are welcome. Please keep the codebase simple and limit heavy dependencies to maintain compatibility with low resource devices.
+New commands are registered inside `main.py` by adding to the `COMMANDS` mapping. Each command handler receives the raw argument string and can call into helper modules (journal, trainer, mimic, etc.). Keep handlers focused on user interaction and move reusable logic into dedicated modules so they can be tested independently.
 
-## Plugins
+When adding new storage requirements, update `solace.configuration.DEFAULT_CONFIG` so directories are created automatically and the config file documents their purpose.
 
-Place Python files in `solace/plugins/` to extend functionality. Each plugin should expose a `register(cmd_map)` function that adds commands to the global map. Plugins are loaded automatically when `allow_plugins` is enabled in the settings.
+Voice functionality relies on optional dependencies (`pyttsx3`, `speechrecognition`, `sounddevice`). Ensure new features degrade gracefully when these packages are missing.
 
-## Developer Mode
+## Testing considerations
 
-Launch Solace with the `--dev` flag or create a `devmode.txt` file to populate dummy entries for testing the interface. This seeds a handful of diary entries, notes and todo items.
-
-
+The current codebase has no automated tests. Manual testing generally involves running Solace, creating sample entries, performing searches and exercising the training commands. Contributions that add unit tests for the helper modules are welcome.
