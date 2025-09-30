@@ -1,5 +1,9 @@
-pyttsx3
-sounddevice
-speechrecognition
+# Core dependencies for the lightweight Solace CLI
 cryptography
 networkx
+nltk
+pyttsx3
+rich
+sounddevice
+SpeechRecognition
+termcolor
