@@ -1,48 +1,73 @@
-"""Persona mimic helper that mirrors the user's journal tone."""
+"""Rule based conversation mimicry using offline guides."""
+
 from __future__ import annotations
 
-import random
-from collections import Counter
-from typing import List
+import json
+from difflib import SequenceMatcher
+from typing import Dict, List
 
-from journal import latest_entries
+from solace.configuration import get_storage_path, load_config
 
-GREETING_CHOICES = [
-    "It's your Solace echo speaking.",
-    "Hey, I'm the version of you built from your notes.",
-    "Your journaling twin checking in.",
+CONFIG = load_config()
+GUIDE_FILE = get_storage_path(CONFIG, "conversation") / "guide.json"
+
+DEFAULT_GUIDE = [
+    {"trigger": ["hello", "hi", "hey"], "response": "Hello! It's good to hear from you."},
+    {"trigger": ["how are you", "you ok"], "response": "I'm feeling thoughtful and ready to listen."},
+    {"trigger": ["thank you", "thanks"], "response": "Always! Let me know what else you'd like to explore."},
+    {"trigger": ["help", "what can you do"], "response": "You can ask me to journal, search memories, or teach code snippets."},
 ]
 
 
-def _collect_keywords(entries: List[dict]) -> List[str]:
-    words: List[str] = []
-    for entry in entries:
-        for word in entry.get("text", "").split():
-            cleaned = word.strip().strip(".,!?;:()[]{}\"'")
-            if len(cleaned) < 4:
-                continue
-            words.append(cleaned.lower())
-    return words
+def _load_guide() -> List[Dict[str, List[str]]]:
+    GUIDE_FILE.parent.mkdir(parents=True, exist_ok=True)
+    if GUIDE_FILE.exists():
+        try:
+            data = json.loads(GUIDE_FILE.read_text(encoding="utf-8"))
+            if isinstance(data, list):
+                return data
+        except json.JSONDecodeError:
+            pass
+    GUIDE_FILE.write_text(json.dumps(DEFAULT_GUIDE, indent=2), encoding="utf-8")
+    return DEFAULT_GUIDE
 
 
-def reply(prompt: str) -> str:
-    """Generate a short reply using the recent journal tone."""
-    entries = latest_entries(10)
-    if not entries:
-        return "I need a few journal entries to learn your voice first."
+GUIDE_DATA = _load_guide()
 
-    keywords = _collect_keywords(entries)
-    counts = Counter(keywords)
-    trending = ", ".join(word for word, _ in counts.most_common(3)) or "thoughts"
 
-    intro = random.choice(GREETING_CHOICES)
-    bridge = prompt.strip() or "what's on your mind"
-    sample = random.choice(entries)
-    snippet = sample.get("text", "").split(". ")[0]
+def _score(user_text: str, trigger: str) -> float:
+    return SequenceMatcher(None, user_text.lower(), trigger.lower()).ratio()
 
-    return (
-        f"{intro}\n"
-        f"I can hear how often you mention {trending}.\n"
-        f"In your recent note you said: '{snippet}'.\n"
-        f"So about {bridge}, I'd say stay true to that energy."
-    )
+
+def reply(user_text: str) -> str:
+    user_text = user_text.strip()
+    if not user_text:
+        return "I need a bit more detail to respond."
+
+    best_score = 0.0
+    best_response = None
+    for rule in GUIDE_DATA:
+        triggers = rule.get("trigger") or []
+        for trigger in triggers:
+            score = _score(user_text, trigger)
+            if score > best_score:
+                best_score = score
+                best_response = rule.get("response")
+
+    if best_score < 0.45 or best_response is None:
+        fallback_mode = CONFIG.get("memory", {}).get("fallback_mode", "apologise")
+        if fallback_mode == "gentle":
+            return "I'm not sure about that yet, but we can explore it together via /teach."
+        if fallback_mode == "encourage":
+            return "Teach me that phrase with /teach and I'll echo it back next time!"
+        return "Sorry, I didn’t understand that yet. You can teach me using `/teach`."
+
+    tone = CONFIG.get("tone", "friendly")
+    if tone == "quiet":
+        return best_response
+    if tone == "verbose":
+        return f"{best_response}\nLet me know if you want more detail or examples."
+    return best_response
+
+
+__all__ = ["reply"]
