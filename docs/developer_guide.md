@@ -40,6 +40,8 @@ User preferences are stored in `settings/settings.json` and can be changed at ru
 
 New commands can be added in `commands.py` by registering a function in `COMMAND_MAP`. Features such as diary storage or note parsing live in the `logic/` package.
 
+The digital clone is implemented in `logic/mimic.py`. The module analyses diary entries to extract recurring themes, a dominant mood and a handful of representative sentences. Chat mode stays locked until at least ten entries are available; once unlocked the persona snapshot is rebuilt each time new entries are saved.
+
 Pull requests are welcome. Please keep the codebase simple and limit heavy dependencies to maintain compatibility with low resource devices.
 
 ## Plugins

@@ -13,6 +13,7 @@ Solace is a portable command line companion for journaling, note taking and mana
 * **Flexible storage** – save diary pages, markdown notes, code snippets and short facts in one place.
 * **Knowledge graph** – a lightweight graph keeps track of entities you mention in chats.
 * **Search everything** – quickly find past entries, notes or facts with the `/recall` command.
+* **Evolving digital clone** – once you log enough diary entries Solace unlocks a chat mode that mirrors your tone and recurring themes.
 * **Optional voice mode** – basic text to speech and speech recognition are supported when extra packages are installed.
 * **Customisable settings** – adjust themes, autosave, encryption and more in `/mode settings`, including an optional password lock.
 * **Extensible via plugins** – drop Python files in `solace/plugins` and enable them through the settings menu.
