@@ -1,28 +1,22 @@
 # CLI Reference
 
-Below is a quick list of the commands understood by Solace. The program can also
-be launched with `--speak` or `--listen` to temporarily enable text-to-speech or
-speech recognition.
+Solace commands all start with `/`. The launcher also accepts `--speak` and `--listen` flags to temporarily enable voice features for the current session.
 
 | Command | Description |
 | ------- | ----------- |
-| `/diary` | Add a diary entry or import a document. Prompts for tags and privacy. |
-| `/notes` | Create a markdown note or import a document. |
-| `/todo`  | Manage the todo list: `add`, `list`, `done`, `delete`. |
-| `/ask`   | Ask about a coding concept. |
-| `/code`  | Retrieve a stored code snippet. |
-| `/debug` | Look up known fixes for an error message. |
-| `/teachcode` | Teach a new code example or import code from a document. Code blocks are detected automatically when importing. |
-| `/memory` | Display remembered facts. |
-| `/recall` | Search diary entries, notes and knowledge. |
-| `/summary` | Show data statistics. |
-| `/speak` | Speak text aloud (if available). |
-| `/unlock` | Decrypt a file. |
-| `/demo` | Show a quick demo. |
-| `/mode settings` | Configure preferences. |
-| `/help` | Display help text. |
-| `/exit` | Exit the application. |
+| `/diary [text]` | Add a diary entry. Prompts for timestamp and tags when needed. |
+| `/notes [text]` | Capture a note entry. |
+| `/todo [text]` | Log a todo reminder. |
+| `/quote [text]` | Save an inspirational quote. |
+| `/search <query>` | Search entries with fuzzy matching across content and tags. |
+| `/export [markdown|pdf] [path]` | Export all entries to Markdown or PDF. |
+| `/teach <language> [text]` | Store a code/example snippet manually. |
+| `/remember <language> <query>` | Retrieve stored snippets matching the query. |
+| `/code <language> <keyword>` | Display snippets with syntax highlighting. |
+| `/mimic <text>` | Generate a rule-based conversational reply. |
+| `/listen` | Capture speech input when STT is enabled. |
+| `/settings [subcommand]` | Configure password, voice, tone, alias, backups and fallback mode. |
+| `/help` | Show the help table inside Solace. |
+| `/exit` | Quit the program. |
 
-Some features from the project plan, such as image attachments and advanced pattern tracking, are not implemented yet.
-
-
+Colon shortcuts like `:diary Something happened today` also record entries without the slash prefix.

@@ -4,50 +4,58 @@
 
 # Solace
 
-Solace is a portable command line companion for journaling, note taking and managing a small, personal knowledge base. Everything runs offline so your private thoughts stay on your device. 
+Solace is an offline command line companion for journaling, quick notes and a small personal code/reference library. All data is stored locally inside your home directory so your writing never leaves your device.
 
-## Key Features
+## What Solace Can Do Today
 
-* **Privacy first** – diary entries and notes live locally and can be secured with password-based encryption.
-* **Low resource** – works on Linux and Android (Termux) with minimal dependencies.
-* **Flexible storage** – save diary pages, markdown notes, code snippets and short facts in one place.
-* **Knowledge graph** – a lightweight graph keeps track of entities you mention in chats.
-* **Search everything** – quickly find past entries, notes or facts with the `/recall` command.
-* **Evolving digital clone** – once you log enough diary entries Solace unlocks a chat mode that mirrors your tone and recurring themes.
-* **Optional voice mode** – basic text to speech and speech recognition are supported when extra packages are installed.
-* **Customisable settings** – adjust themes, autosave, encryption and more in `/mode settings`, including an optional password lock.
-* **Extensible via plugins** – drop Python files in `solace/plugins` and enable them through the settings menu.
-* **Cross‑platform CLI** – launch Solace with the `solace` command on Linux, Windows or Termux.
+* **Capture entries** – create dated `/diary`, `/notes`, `/todo` or `/quote` entries with optional tags. Entries are stored as JSON under `~/.solace/journal`.
+* **Remember securely** – enable password protection and Fernet-based encryption so saved entries stay private.
+* **Search memories** – `/search` looks through diary text and tags with fuzzy matching to surface relevant entries.
+* **Export journals** – `/export` can produce Markdown or PDF summaries of everything you have written.
+* **Teach snippets** – `/teach`, `/remember` and `/code` manage a lightweight library of language-specific examples stored in `~/.solace/training`.
+* **Rule-based mimicry** – `/mimic` replies using a configurable phrase guide and tone, providing a friendly echo of your writing.
+* **Optional voice helpers** – toggle text-to-speech or speech recognition in `/settings` once the extra packages are installed.
 
 ## Installation
 
-1. Clone this repository and run the installer:
+1. Clone the repository:
    ```bash
    git clone https://github.com/Kanegraffiti/Solace.git
    cd Solace
-   bash setup/install.sh
    ```
-   The script detects your platform and installs any required system packages before setting up a cross‑platform `solace` command.
-2. If needed run the NLTK installer for offline speech models:
+2. Install the Python requirements. The simplest route is the helper script:
    ```bash
-   bash solace/nltk-install.sh
+   python install.py
    ```
-3. Launch the application:
+   The installer detects your platform, installs dependencies from `requirements*.txt`, creates a `solace` launcher and initialises `~/.solaceconfig.json`. You can re-run it with `--alias <name>` to change the launcher name or `--skip-deps` when managing packages manually.
+3. Start Solace using the launcher (or run `python main.py`):
    ```bash
-   solace [--speak] [--listen]
+   solace
    ```
-   The optional flags temporarily enable text-to-speech or speech recognition even if disabled in the settings.
-4. Type `/help` inside Solace to see all commands and `/mode settings` to customise preferences. See [docs/settings.md](docs/settings.md) for details.
+4. Type `/help` in the prompt to list commands. Settings such as password protection, voice toggles or response tone live under `/settings`.
 
-Use `/unlock <file>` to decrypt diary entries from the command line. The full user guide lives in [docs/user_guide.md](docs/user_guide.md).
+See [docs/linux_setup.md](docs/linux_setup.md) and [docs/termux_setup.md](docs/termux_setup.md) for manual dependency notes.
 
-## Project Screenshots
-<p align="center">
-  <img src="assets/interface1.png" alt="Solace Screenshots" style="width:100%;max-width:100%;height:auto;" />
-</p>
+## Project Tour
 
-See [docs/developer_guide.md](docs/developer_guide.md) for information on contributing or extending the project.
+* `main.py` – interactive CLI loop that handles commands and session logging.
+* `journal.py` – storage helpers for diary, note, todo and quote entries with optional encryption.
+* `trainer.py` – manages language-tagged knowledge snippets and saved training sessions.
+* `mimic.py` – rule-based conversational replies with configurable fallback modes.
+* `solace/` – shared modules for configuration, storage paths and memory search utilities.
 
-Solace is intentionally minimal. Features like image attachments and advanced pattern tracking are still on the roadmap. Pull requests are welcome!
+Configuration and data live under `~/.solaceconfig.json` and `~/.solace/`. The application creates folders as needed and never contacts remote services.
 
-Additional setup help is available in [docs/termux_setup.md](docs/termux_setup.md) and [docs/linux_setup.md](docs/linux_setup.md).
+## Documentation
+
+Guides for using, configuring and extending Solace are available in the `docs/` folder:
+
+* [overview.md](docs/overview.md) – feature overview and storage model.
+* [user_guide.md](docs/user_guide.md) – step-by-step walkthrough of commands.
+* [cli_reference.md](docs/cli_reference.md) – quick command summary.
+* [settings.md](docs/settings.md) – configuration options explained.
+* [developer_guide.md](docs/developer_guide.md) – project layout and extension tips.
+
+---
+
+Solace is intentionally minimal and focused on text-first workflows. Issues and pull requests are welcome to improve the experience.
