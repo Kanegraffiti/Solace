@@ -146,6 +146,13 @@ def main() -> None:
     parser.add_argument(
         "--skip-deps", action="store_true", help="Skip dependency installation"
     )
+    parser.add_argument(
+        "--extras",
+        nargs="*",
+        choices=["ml"],
+        default=[],
+        help="Optional extra dependency sets to install (e.g. --extras ml)",
+    )
     args = parser.parse_args()
 
     env_name = _detect_environment()
@@ -155,6 +162,10 @@ def main() -> None:
 
     if not args.skip_deps:
         requirements = [PROJECT_ROOT / "requirements.txt", PROJECT_ROOT / "requirements-extra.txt"]
+        if "ml" in args.extras:
+            requirements.append(PROJECT_ROOT / "requirements-ml.txt")
+        else:
+            print("Skipping ML extras. Use --extras ml to install semantic and summarisation models.")
         _pip_install(requirements)
     else:
         print("Skipping dependency installation per --skip-deps")

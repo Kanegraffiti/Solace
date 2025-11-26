@@ -21,7 +21,7 @@ from solace.configuration import (
     update_tone,
     verify_password,
 )
-from solace.memory import search_entries
+from solace.semantic import SearchHit, hybrid_search
 
 
 @dataclass
@@ -67,9 +67,9 @@ class JournalController:
         filtered_tags = {tag.lower() for tag in tags}
         return [entry for entry in entries if filtered_tags.intersection({tag.lower() for tag in entry.tags})]
 
-    def search(self, query: str) -> List:
+    def search(self, query: str) -> List[SearchHit]:
         entries = journal.load_entries(cipher=self.context.cipher, password=self.context.password)
-        return search_entries(query, entries)
+        return hybrid_search(query, entries)
 
     def export(self, *, format_choice: str = "markdown", destination: Optional[Path] = None) -> Path:
         target = destination

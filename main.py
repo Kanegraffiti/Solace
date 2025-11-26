@@ -30,6 +30,7 @@ from solace.configuration import (
     update_alias,
     update_tone,
 )
+from solace.semantic import recent_recaps
 from tui.app import SolaceApp
 from tui.controllers import (
     JournalController,
@@ -156,10 +157,42 @@ def _handle_search(args: str) -> None:
     table.add_column("Score", justify="right")
     table.add_column("Date")
     table.add_column("Type")
+    table.add_column("Source")
     table.add_column("Preview")
     for hit in results:
-        preview = hit.entry.content.splitlines()[0][:60]
-        table.add_row(f"{hit.score:.2f}", hit.entry.date, hit.entry.entry_type, preview)
+        preview = (getattr(hit, "snippet", None) or hit.entry.content).splitlines()[0][:120]
+        table.add_row(
+            f"{hit.score:.2f}", hit.entry.date, hit.entry.entry_type, getattr(hit, "source", "hybrid"), preview
+        )
+    console.print(table)
+
+
+def _handle_summarize(args: str) -> None:
+    tokens = args.split()
+    period = "week"
+    if tokens and tokens[0].lower() in {"month", "monthly"}:
+        period = "month"
+    lookback = 180 if period == "month" else 90
+
+    entries = journal_controller.list_entries()
+    if not entries:
+        console.print("[yellow]No journal entries to summarise yet.[/]")
+        return
+
+    recaps = recent_recaps(entries, period=period, lookback_days=lookback)
+    if not recaps:
+        console.print("[yellow]No recent entries found for recap.[/]")
+        return
+
+    table = Table(title=f"{period.title()}ly recaps", show_lines=True)
+    table.add_column("Period")
+    table.add_column("Entries", justify="right")
+    table.add_column("Summary", ratio=2)
+    for label, summary, count in recaps[:6]:
+        preview = summary.strip()
+        if len(preview) > 220:
+            preview = preview[:217] + "…"
+        table.add_row(label, str(count), preview)
     console.print(table)
 
 
@@ -423,6 +456,7 @@ def _handle_help(_: str) -> None:
     table.add_row("/todo", "Record a to-do item")
     table.add_row("/quote", "Save an inspiring quote")
     table.add_row("/search <query>", "Search indexed memories")
+    table.add_row("/summarize [week|month]", "Summarize recent entries into recaps")
     table.add_row("/export [format] [path]", "Export entries to Markdown or PDF")
     table.add_row("/backup", "Create an encrypted restore point locally")
     table.add_row("/sync [backend]", "Send an encrypted archive to a configured backend")
@@ -455,6 +489,7 @@ COMMANDS: Dict[str, Callable[[str], None]] = {
     "todo": lambda args: _capture_entry("todo", args),
     "quote": lambda args: _capture_entry("quote", args),
     "search": _handle_search,
+    "summarize": _handle_summarize,
     "export": _handle_export,
     "backup": _handle_backup,
     "sync": _handle_sync,
