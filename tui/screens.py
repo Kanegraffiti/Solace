@@ -148,9 +148,10 @@ class SearchScreen(Screen):
         results_widget = self.query_one("#search-results", ListView)
         results_widget.clear()
         for hit in self.results:
-            preview = hit.entry.content.splitlines()[0][:80]
+            preview = (hit.snippet or hit.entry.content.splitlines()[0]).strip()[:160]
             label = f"{hit.entry.date} {hit.entry.time} • {hit.entry.entry_type.title()}"
-            results_widget.append(ListItem(Static(f"{label}\n{preview}")))
+            score = f"{hit.score:.2f}" if hasattr(hit, "score") else ""
+            results_widget.append(ListItem(Static(f"{label} ({score})\n{preview}")))
 
 
 class SettingsScreen(Screen):
