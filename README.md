@@ -12,6 +12,7 @@ Solace is an offline command line companion for journaling, quick notes and a sm
 * **Remember securely** – enable password protection and Fernet-based encryption so saved entries stay private.
 * **Search memories** – `/search` looks through diary text and tags with fuzzy matching to surface relevant entries.
 * **Export journals** – `/export` can produce Markdown or PDF summaries of everything you have written.
+* **Back up or sync** – `/backup` creates encrypted restore points while `/sync` can push archives to optional local, S3 or WebDAV destinations with dry-run safeguards.
 * **Teach snippets** – `/teach`, `/remember` and `/code` manage a lightweight library of language-specific examples stored in `~/.solace/training`.
 * **Rule-based mimicry** – `/mimic` replies using a configurable phrase guide and tone, providing a friendly echo of your writing.
 * **Optional voice helpers** – toggle text-to-speech or speech recognition in `/settings` once the extra packages are installed.

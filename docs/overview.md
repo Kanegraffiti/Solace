@@ -12,4 +12,4 @@ Data is intentionally simple so it can be inspected or backed up manually. Journ
 
 The `/settings` command provides quick switches for password protection, voice options, tone, alias name and backup helpers. See [settings.md](settings.md) for command details.
 
-Solace ships as a single-terminal experience: run it, type `/help` to view commands, and keep writing. There is no web UI, sync service or analytics.
+Solace ships as a single-terminal experience: run it, type `/help` to view commands, and keep writing. There is no web UI or analytics. Optional `/sync` backends stay disabled until you configure them, keeping the default experience fully offline.

@@ -10,6 +10,8 @@ Solace commands all start with `/`. The launcher also accepts `--speak` and `--l
 | `/quote [text]` | Save an inspirational quote. |
 | `/search <query>` | Search entries with fuzzy matching across content and tags. |
 | `/export [markdown|pdf] [path]` | Export all entries to Markdown or PDF. |
+| `/backup [--dry-run]` | Create an encrypted local archive with an optional restore point. |
+| `/sync [backend] [--dry-run]` | Send the encrypted archive to the configured backend (local, s3 or webdav). |
 | `/teach <language> [text]` | Store a code/example snippet manually. |
 | `/remember <language> <query>` | Retrieve stored snippets matching the query. |
 | `/code <language> <keyword>` | Display snippets with syntax highlighting. |
