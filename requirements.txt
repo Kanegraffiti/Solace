@@ -4,6 +4,7 @@ networkx
 nltk
 pyttsx3
 rich
+textual
 sounddevice
 SpeechRecognition
 termcolor

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import argparse
 import json
 import shutil
 import sys
@@ -21,18 +22,22 @@ import trainer
 from solace.configuration import (
     CONFIG_PATH,
     ensure_storage_dirs,
-    get_cipher,
     get_storage_path,
     list_known_paths,
     load_config,
     save_config,
     set_password,
-    toggle_voice,
     update_alias,
     update_tone,
-    verify_password,
 )
-from solace.memory import search_entries
+from tui.app import SolaceApp
+from tui.controllers import (
+    JournalController,
+    MimicController,
+    SettingsController,
+    SolaceContext,
+    TrainerController,
+)
 
 
 console = Console()
@@ -40,6 +45,12 @@ CONFIG = load_config()
 ensure_storage_dirs(CONFIG)
 PROFILE = CONFIG.get("profile", {})
 SESSION_LOG = get_storage_path(CONFIG, "root") / "session.log"
+
+CONTEXT = SolaceContext(CONFIG)
+journal_controller = JournalController(CONTEXT)
+trainer_controller = TrainerController()
+mimic_controller = MimicController()
+settings_controller = SettingsController(CONTEXT)
 
 
 class VoiceIO:
@@ -129,14 +140,7 @@ def _capture_entry(entry_type: str, args: str) -> None:
     when = _prompt_datetime()
     tags_input = Prompt.ask("Tags (comma separated)", default="")
     tags = [tag.strip() for tag in tags_input.split(",") if tag.strip()]
-    entry = journal.add_entry(
-        text,
-        entry_type=entry_type,
-        tags=tags,
-        when=when,
-        cipher=SESSION_CIPHER,
-        password=SESSION_PASSWORD,
-    )
+    entry = journal_controller.add_entry(text, entry_type=entry_type, tags=tags, when=when)
     console.print(Panel(f"Saved {entry.entry_type} entry for {entry.date} {entry.time}.", title="Journal"))
     VOICE.speak(f"Entry saved for {entry.date}")
     _log_event(entry_type, entry.content[:80])
@@ -144,8 +148,7 @@ def _capture_entry(entry_type: str, args: str) -> None:
 
 def _handle_search(args: str) -> None:
     query = args.strip() or Prompt.ask("What would you like to find?")
-    entries = journal.load_entries(cipher=SESSION_CIPHER, password=SESSION_PASSWORD)
-    results = search_entries(query, entries)
+    results = journal_controller.search(query)
     if not results:
         console.print("[yellow]No matching memories yet.[/]")
         return
@@ -170,7 +173,7 @@ def _handle_export(args: str) -> None:
         destination = Path(parts[1]).expanduser()
     else:
         destination = get_storage_path(CONFIG, "journal") / f"journal-export.{format_choice[:3]}"
-    exported = journal.export_entries(destination, format=format_choice, cipher=SESSION_CIPHER, password=SESSION_PASSWORD)
+    exported = journal_controller.export(format_choice=format_choice, destination=destination)
     console.print(Panel(f"Exported entries to {exported}", title="Export"))
 
 
@@ -179,8 +182,7 @@ def _handle_teach(args: str) -> None:
     language = parts[0] if parts else Prompt.ask("Language", choices=list(trainer.LANGUAGE_MAP.keys()))
     content = " ".join(parts[1:]) or _prompt_multiline()
     category = Prompt.ask("Category", choices=["example", "error", "tip"], default="example")
-    snippet = trainer.teach(language.lower(), content, category=category)
-    trainer.record_session(language, content, tags=[category])
+    snippet = trainer_controller.teach(language, content, category=category)
     console.print(Panel(f"Stored {category} for {language} from manual teaching.", title="Trainer"))
     VOICE.speak("Training updated")
 
@@ -193,7 +195,7 @@ def _handle_remember(args: str) -> None:
     else:
         language = parts[0]
         prompt = " ".join(parts[1:]) or Prompt.ask("What should I recall?")
-    results = trainer.query(language.lower(), prompt)
+    results = trainer_controller.query(language, prompt)
     if not results:
         console.print("[yellow]Nothing in the training set yet. Try /teach first.[/]")
         return
@@ -210,7 +212,7 @@ def _handle_code(args: str) -> None:
     else:
         language = parts[0]
         prompt = " ".join(parts[1:]) or Prompt.ask("Keyword")
-    results = trainer.query(language.lower(), prompt)
+    results = trainer_controller.query(language, prompt)
     if not results:
         console.print("[yellow]No examples found. Teach me with /teach <language> first.[/]")
         return
@@ -220,7 +222,7 @@ def _handle_code(args: str) -> None:
 
 
 def _handle_mimic(args: str) -> None:
-    response = mimic.reply(args)
+    response = mimic_controller.reply(args)
     console.print(Panel(response, title="Mimic"))
     VOICE.speak(response)
     _log_event("mimic", args)
@@ -247,21 +249,24 @@ def _handle_settings(args: str) -> None:
     subcommand = parts[0].lower()
     if subcommand == "password":
         CONFIG = set_password(CONFIG)
+        CONTEXT.config = CONFIG
         return
     if subcommand == "voice":
         tts = Confirm.ask("Enable text to speech?", default=CONFIG.get("voice", {}).get("tts", False))
         stt = Confirm.ask("Enable speech to text?", default=CONFIG.get("voice", {}).get("stt", False))
-        CONFIG = toggle_voice(CONFIG, tts=tts, stt=stt)
+        settings_controller.toggle_voice(tts=tts, stt=stt)
         console.print("Voice preferences saved. Re-run Solace to reload engines.")
         return
     if subcommand == "tone":
         tone = parts[1] if len(parts) > 1 else Prompt.ask("Tone", choices=["friendly", "quiet", "verbose"], default=CONFIG.get("tone", "friendly"))
         CONFIG = update_tone(CONFIG, tone)
+        CONTEXT.config = CONFIG
         console.print(f"Tone set to {tone}.")
         return
     if subcommand == "alias":
         alias = parts[1] if len(parts) > 1 else Prompt.ask("Alias", default=CONFIG.get("alias", "solace"))
         CONFIG = update_alias(CONFIG, alias)
+        CONTEXT.config = CONFIG
         console.print(f"Alias stored as {alias}. Re-run install.py --alias {alias} to update launchers.")
         return
     if subcommand == "backup":
@@ -279,12 +284,13 @@ def _handle_settings(args: str) -> None:
         console.print("[green]Backup restored. Restart Solace to reload data.[/]")
         return
     if subcommand == "info":
+        info = settings_controller.info()
         table = Table(title="Solace info")
         table.add_column("Key")
         table.add_column("Value")
-        table.add_row("Config", str(CONFIG_PATH))
-        table.add_row("Version", CONFIG.get("version", "2.0"))
-        for path in list_known_paths(CONFIG):
+        table.add_row("Config", info.get("config", str(CONFIG_PATH)))
+        table.add_row("Version", info.get("version", CONFIG.get("version", "2.0")))
+        for path in info.get("paths", list_known_paths(CONFIG)):
             table.add_row("Storage", str(path))
         console.print(table)
         return
@@ -326,9 +332,9 @@ def _handle_help(_: str) -> None:
 def _verify_security() -> None:
     global SESSION_PASSWORD, SESSION_CIPHER
     try:
-        SESSION_PASSWORD = verify_password(CONFIG)
-        if CONFIG.get("security", {}).get("encryption_enabled", True):
-            SESSION_CIPHER = get_cipher(CONFIG, password=SESSION_PASSWORD)
+        settings_controller.verify_security()
+        SESSION_PASSWORD = CONTEXT.password
+        SESSION_CIPHER = CONTEXT.cipher
     except PermissionError:
         console.print("[red]Password verification failed. Exiting.[/]")
         sys.exit(1)
@@ -359,7 +365,7 @@ COLON_TYPES = {
 }
 
 
-def main() -> None:
+def run_cli() -> None:
     console.print(Panel(f"Welcome back, {PROFILE.get('name', 'Friend')}!", title="Solace"))
     _verify_security()
     console.print("Type /help for commands or /settings to configure Solace.")
@@ -393,6 +399,27 @@ def main() -> None:
         _capture_entry("diary", text)
 
     console.print(f"[cyan]Session log stored at {SESSION_LOG}[/]")
+
+
+def main(argv: Optional[list[str]] = None) -> None:
+    parser = argparse.ArgumentParser(description="Solace personal assistant")
+    parser.add_argument("--tui", action="store_true", help="Launch the Textual user interface")
+    args = parser.parse_args(argv)
+
+    if args.tui:
+        _verify_security()
+        app = SolaceApp(
+            CONFIG,
+            journal_controller,
+            trainer_controller,
+            mimic_controller,
+            settings_controller,
+            voice=VOICE,
+        )
+        app.run()
+        return
+
+    run_cli()
 
 
 if __name__ == "__main__":
