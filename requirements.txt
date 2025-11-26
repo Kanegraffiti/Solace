@@ -1,9 +1,11 @@
 # Core dependencies for the lightweight Solace CLI
 cryptography
+fastapi
 networkx
 nltk
 pyttsx3
 rich
+uvicorn[standard]
 textual
 sounddevice
 SpeechRecognition

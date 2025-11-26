@@ -44,8 +44,19 @@ See [docs/linux_setup.md](docs/linux_setup.md) and [docs/termux_setup.md](docs/t
 * `trainer.py` – manages language-tagged knowledge snippets and saved training sessions.
 * `mimic.py` – rule-based conversational replies with configurable fallback modes.
 * `solace/` – shared modules for configuration, storage paths and memory search utilities.
+* `web/` – local-only FastAPI + React stack for browsing diaries, filtering tags, exporting entries and managing snippets.
 
 Configuration and data live under `~/.solaceconfig.json` and `~/.solace/`. The application creates folders as needed and never contacts remote services.
+
+## Web interface (local only)
+
+A companion web UI lives in `web/`. It reuses the Solace password/encryption settings for authentication and is designed to stay on localhost.
+
+```bash
+make dev
+```
+
+The command starts the FastAPI backend (port 8000 by default) and Vite dev server (port 4173) with hot reload. Keep both processes bound to localhost or behind a firewall—there is no remote identity provider.
 
 ## Documentation
 
