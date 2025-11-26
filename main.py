@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import argparse
-import json
 import shutil
 import sys
 from datetime import datetime
@@ -19,6 +18,7 @@ from rich.table import Table
 import journal
 import mimic
 import trainer
+from solace import sync as sync_service
 from solace.configuration import (
     CONFIG_PATH,
     ensure_storage_dirs,
@@ -177,6 +177,115 @@ def _handle_export(args: str) -> None:
     console.print(Panel(f"Exported entries to {exported}", title="Export"))
 
 
+def _confirm_overwrite(target: str) -> bool:
+    return Confirm.ask(f"{target} already exists. Overwrite?", default=False)
+
+
+def _conflict_target(error: Exception) -> str:
+    filename = getattr(error, "filename", None)
+    return str(filename or error)
+
+
+def _handle_backup(args: str) -> None:
+    tokens = args.split()
+    dry_run = "--dry-run" in tokens or "-n" in tokens
+    allow_overwrite = "--force" in tokens or "-f" in tokens
+    include_restore = "--no-restore" not in tokens
+    with console.status("Packaging encrypted journal archive..."):
+        try:
+            result = sync_service.perform_sync(
+                CONFIG,
+                backend="local",
+                cipher=SESSION_CIPHER,
+                password=SESSION_PASSWORD,
+                include_restore_point=include_restore,
+                allow_overwrite=allow_overwrite,
+                dry_run=dry_run,
+            )
+        except sync_service.SyncConflictError as conflict:
+            if _confirm_overwrite(_conflict_target(conflict)):
+                result = sync_service.perform_sync(
+                    CONFIG,
+                    backend="local",
+                    cipher=SESSION_CIPHER,
+                    password=SESSION_PASSWORD,
+                    include_restore_point=include_restore,
+                    allow_overwrite=True,
+                    dry_run=dry_run,
+                )
+            else:
+                console.print("[yellow]Backup cancelled to keep existing file.[/]")
+                return
+        except Exception as exc:  # noqa: BLE001
+            console.print(f"[red]Backup failed:[/] {exc}")
+            return
+
+    if result.dry_run:
+        console.print(Panel(f"Dry run complete. Archive would be saved to {result.archive}.", title="Backup"))
+        return
+    console.print(
+        Panel(
+            f"Backup saved at {result.archive}. Copy {CONFIG_PATH} alongside it to preserve keys.",
+            title="Backup",
+        )
+    )
+
+
+def _handle_sync(args: str) -> None:
+    tokens = args.split()
+    backend = None
+    allow_overwrite = "--force" in tokens or "-f" in tokens
+    dry_run = "--dry-run" in tokens or "-n" in tokens
+    include_restore = "--no-restore" not in tokens
+    for token in tokens:
+        if token in sync_service.SUPPORTED_BACKENDS:
+            backend = token
+        if token.startswith("--backend="):
+            backend = token.split("=", 1)[1]
+    with console.status("Syncing journal..."):
+        try:
+            result = sync_service.perform_sync(
+                CONFIG,
+                backend=backend,
+                cipher=SESSION_CIPHER,
+                password=SESSION_PASSWORD,
+                include_restore_point=include_restore,
+                allow_overwrite=allow_overwrite,
+                dry_run=dry_run,
+            )
+        except sync_service.SyncConflictError as conflict:
+            if _confirm_overwrite(_conflict_target(conflict)):
+                result = sync_service.perform_sync(
+                    CONFIG,
+                    backend=backend,
+                    cipher=SESSION_CIPHER,
+                    password=SESSION_PASSWORD,
+                    include_restore_point=include_restore,
+                    allow_overwrite=True,
+                    dry_run=dry_run,
+                )
+            else:
+                console.print("[yellow]Sync cancelled to avoid overwriting remote data.[/]")
+                return
+        except sync_service.SyncConfigurationError as exc:
+            console.print(f"[red]Sync configuration error:[/] {exc}")
+            return
+        except Exception as exc:  # noqa: BLE001
+            console.print(f"[red]Sync failed:[/] {exc}")
+            return
+
+    destination = result.remote_target or result.archive
+    if result.dry_run:
+        console.print(Panel(f"Dry run complete. Data would sync to {destination}.", title="Sync"))
+        return
+    console.print(
+        Panel(
+            f"Journal synced via {result.backend}. Restore point included: {'yes' if include_restore else 'no'}.\nTarget: {destination}",
+            title="Sync",
+        )
+    )
+
+
 def _handle_teach(args: str) -> None:
     parts = args.split()
     language = parts[0] if parts else Prompt.ask("Language", choices=list(trainer.LANGUAGE_MAP.keys()))
@@ -270,10 +379,7 @@ def _handle_settings(args: str) -> None:
         console.print(f"Alias stored as {alias}. Re-run install.py --alias {alias} to update launchers.")
         return
     if subcommand == "backup":
-        target = get_storage_path(CONFIG, "root") / f"solace-backup-{datetime.now().strftime('%Y%m%d-%H%M%S')}"
-        archive = shutil.make_archive(str(target), "zip", root_dir=get_storage_path(CONFIG, "root"))
-        extra = CONFIG_PATH
-        console.print(Panel(f"Backup created at {archive}. Remember to copy {extra} as well.", title="Backup"))
+        _handle_backup(" ".join(parts[1:]))
         return
     if subcommand == "restore" and len(parts) > 1:
         archive = Path(parts[1]).expanduser()
@@ -318,6 +424,8 @@ def _handle_help(_: str) -> None:
     table.add_row("/quote", "Save an inspiring quote")
     table.add_row("/search <query>", "Search indexed memories")
     table.add_row("/export [format] [path]", "Export entries to Markdown or PDF")
+    table.add_row("/backup", "Create an encrypted restore point locally")
+    table.add_row("/sync [backend]", "Send an encrypted archive to a configured backend")
     table.add_row("/teach <language>", "Add a training snippet manually")
     table.add_row("/remember <language> <query>", "Recall training notes")
     table.add_row("/code <language> <topic>", "Show code examples from training data")
@@ -348,6 +456,8 @@ COMMANDS: Dict[str, Callable[[str], None]] = {
     "quote": lambda args: _capture_entry("quote", args),
     "search": _handle_search,
     "export": _handle_export,
+    "backup": _handle_backup,
+    "sync": _handle_sync,
     "teach": _handle_teach,
     "remember": _handle_remember,
     "code": _handle_code,

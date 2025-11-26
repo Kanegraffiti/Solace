@@ -56,12 +56,19 @@ Run `/settings` to see available subcommands:
 - `voice` – enable or disable text-to-speech (TTS) and speech-to-text (STT).
 - `tone <friendly|quiet|verbose>` – change how verbose mimic responses are.
 - `alias <name>` – update the stored launcher name.
-- `backup` – create a zip archive of your Solace storage directory.
+- `backup` – create an encrypted restore point of your Solace storage directory (use `--dry-run` to preview).
 - `restore <archive>` – unpack a previously created archive.
 - `info` – display paths and the current version.
 - `fallback <mode>` – set the mimic fallback response (e.g. `apologise`, `gentle`, `encourage`).
 
 All settings are saved to `~/.solaceconfig.json`. The storage directory is created automatically if it does not already exist.
+
+### Sync and backups
+
+- `/backup` always encrypts journal data using your configuration keys and includes a plain-text restore point by default.
+- `/sync` packages the same archive and sends it to the configured backend (local, `s3` or `webdav`). Use `--dry-run` to see what would happen before any files are written.
+- Network uploads remain disabled until you enable the relevant backend in `~/.solaceconfig.json`; leaving `enabled` as `false` keeps Solace offline.
+- The `sync.dry_run` flag in `~/.solaceconfig.json` is `true` by default so your first runs only preview actions. Set it to `false` when you're comfortable with the flow.
 
 ## Leaving Solace
 

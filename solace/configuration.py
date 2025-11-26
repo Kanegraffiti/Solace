@@ -53,6 +53,30 @@ DEFAULT_CONFIG: Dict[str, Any] = {
         "tts": False,
         "stt": False,
     },
+    "sync": {
+        "enabled": False,
+        "backend": "local",
+        "dry_run": True,
+        "restore_point": True,
+        "local": {
+            "path": str(STORAGE_DIR / "backups"),
+        },
+        "s3": {
+            "enabled": False,
+            "bucket": "",
+            "prefix": "solace/",
+            "region": "",
+            "endpoint": "",
+            "profile": "",
+        },
+        "webdav": {
+            "enabled": False,
+            "url": "",
+            "path": "/solace",
+            "username": "",
+            "password": "",
+        },
+    },
     "security": {
         "password_enabled": False,
         "password_hash": "",
