@@ -45,9 +45,9 @@ class JournalController:
 
     def add_entry(
         self,
-        entry_type: str,
         content: str,
         *,
+        entry_type: str,
         when: Optional[datetime] = None,
         tags: Optional[List[str]] = None,
     ) -> journal.JournalEntry:

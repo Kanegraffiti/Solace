@@ -3,16 +3,15 @@
 from __future__ import annotations
 
 import json
-from dataclasses import dataclass, asdict
+import uuid
+from dataclasses import asdict, dataclass
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, Iterable, List, Optional
-import uuid
 
 from cryptography.fernet import Fernet, InvalidToken
 
 from solace.configuration import ensure_storage_dirs, get_cipher, get_storage_path, load_config
-
 
 CONFIG = load_config()
 ensure_storage_dirs(CONFIG)
