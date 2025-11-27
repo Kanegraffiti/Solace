@@ -4,6 +4,9 @@
 
 # Solace
 
+![CI](https://github.com/Kanegraffiti/Solace/actions/workflows/ci.yml/badge.svg)
+![Coverage](assets/coverage.svg)
+
 Solace is an offline command line companion for journaling, quick notes and a small personal code/reference library. All data is stored locally inside your home directory so your writing never leaves your device.
 
 ## What Solace Can Do Today
@@ -36,6 +39,20 @@ Solace is an offline command line companion for journaling, quick notes and a sm
 4. Type `/help` in the prompt to list commands. Settings such as password protection, voice toggles or response tone live under `/settings`.
 
 See [docs/linux_setup.md](docs/linux_setup.md) and [docs/termux_setup.md](docs/termux_setup.md) for manual dependency notes.
+
+## Quality & Testing
+
+The repository includes automated linting, typing and test coverage checks. Run them locally with:
+
+```bash
+pip install -r requirements.txt -r requirements-dev.txt
+ruff check .
+flake8 .
+mypy .
+pytest --cov=. --cov-report=term --cov-report=html
+```
+
+Coverage reports are written to `htmlcov/index.html` for local inspection. The `assets/coverage.svg` badge is generated from the latest coverage run using `coverage-badge`.
 
 ## Project Tour
 

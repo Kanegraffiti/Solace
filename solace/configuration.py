@@ -23,11 +23,10 @@ import os
 from pathlib import Path
 from typing import Any, Dict, Iterable
 
-from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
-from cryptography.hazmat.primitives import hashes
-from cryptography.hazmat.backends import default_backend
 from cryptography.fernet import Fernet
-
+from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 
 CONFIG_PATH = Path.home() / ".solaceconfig.json"
 STORAGE_DIR = Path.home() / ".solace"
@@ -189,7 +188,7 @@ def verify_password(config: Dict[str, Any]) -> str | None:
     stored_hash = security.get("password_hash") or ""
     if not stored_hash:
         return None
-    for attempt in range(3):
+    for _attempt in range(3):
         guess = getpass.getpass("Enter Solace password: ")
         if hashlib.sha256(guess.encode("utf-8")).hexdigest() == stored_hash:
             return guess
@@ -291,4 +290,3 @@ __all__ = [
     "list_known_paths",
     "is_password_enabled",
 ]
-

@@ -10,7 +10,6 @@ from typing import Iterable, List
 
 from journal import JournalEntry
 
-
 MONTH_MAP = {
     "january": 1,
     "jan": 1,

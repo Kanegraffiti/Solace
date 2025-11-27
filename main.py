@@ -16,7 +16,6 @@ from rich.syntax import Syntax
 from rich.table import Table
 
 import journal
-import mimic
 import trainer
 from solace import sync as sync_service
 from solace.configuration import (
@@ -39,7 +38,6 @@ from tui.controllers import (
     SolaceContext,
     TrainerController,
 )
-
 
 console = Console()
 CONFIG = load_config()
@@ -311,12 +309,9 @@ def _handle_sync(args: str) -> None:
     if result.dry_run:
         console.print(Panel(f"Dry run complete. Data would sync to {destination}.", title="Sync"))
         return
-    console.print(
-        Panel(
-            f"Journal synced via {result.backend}. Restore point included: {'yes' if include_restore else 'no'}.\nTarget: {destination}",
-            title="Sync",
-        )
-    )
+    restore_label = "yes" if include_restore else "no"
+    message = f"Journal synced via {result.backend}. Restore point included: {restore_label}.\nTarget: {destination}"
+    console.print(Panel(message, title="Sync"))
 
 
 def _handle_teach(args: str) -> None:
@@ -324,7 +319,7 @@ def _handle_teach(args: str) -> None:
     language = parts[0] if parts else Prompt.ask("Language", choices=list(trainer.LANGUAGE_MAP.keys()))
     content = " ".join(parts[1:]) or _prompt_multiline()
     category = Prompt.ask("Category", choices=["example", "error", "tip"], default="example")
-    snippet = trainer_controller.teach(language, content, category=category)
+    trainer_controller.teach(language, content, category=category)
     console.print(Panel(f"Stored {category} for {language} from manual teaching.", title="Trainer"))
     VOICE.speak("Training updated")
 
@@ -400,7 +395,9 @@ def _handle_settings(args: str) -> None:
         console.print("Voice preferences saved. Re-run Solace to reload engines.")
         return
     if subcommand == "tone":
-        tone = parts[1] if len(parts) > 1 else Prompt.ask("Tone", choices=["friendly", "quiet", "verbose"], default=CONFIG.get("tone", "friendly"))
+        tone = parts[1] if len(parts) > 1 else Prompt.ask(
+            "Tone", choices=["friendly", "quiet", "verbose"], default=CONFIG.get("tone", "friendly")
+        )
         CONFIG = update_tone(CONFIG, tone)
         CONTEXT.config = CONFIG
         console.print(f"Tone set to {tone}.")
