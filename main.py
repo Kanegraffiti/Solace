@@ -5,6 +5,8 @@ from __future__ import annotations
 import argparse
 import shutil
 import sys
+from collections.abc import Iterable
+from contextlib import contextmanager
 from datetime import datetime
 from pathlib import Path
 from typing import Callable, Dict, Optional
@@ -98,6 +100,18 @@ class VoiceIO:
 VOICE = VoiceIO(CONFIG)
 SESSION_PASSWORD: Optional[str] = None
 SESSION_CIPHER = None
+PROMPT_DEFAULTS_ONLY = False
+
+
+@contextmanager
+def _defaulting_prompts(enabled: bool) -> Iterable[None]:
+    global PROMPT_DEFAULTS_ONLY
+    previous = PROMPT_DEFAULTS_ONLY
+    PROMPT_DEFAULTS_ONLY = enabled
+    try:
+        yield
+    finally:
+        PROMPT_DEFAULTS_ONLY = previous
 
 
 def _log_event(kind: str, content: str) -> None:
@@ -108,6 +122,8 @@ def _log_event(kind: str, content: str) -> None:
 
 def _prompt_datetime() -> datetime:
     suggestion = journal.suggest_datetime()
+    if PROMPT_DEFAULTS_ONLY:
+        return suggestion
     while True:
         date_str = Prompt.ask("Date", default=suggestion.strftime("%Y-%m-%d"))
         time_str = Prompt.ask("Time", default=suggestion.strftime("%H:%M"))
@@ -137,7 +153,7 @@ def _capture_entry(entry_type: str, args: str) -> None:
         console.print("[yellow]No content captured.[/]")
         return
     when = _prompt_datetime()
-    tags_input = Prompt.ask("Tags (comma separated)", default="")
+    tags_input = "" if PROMPT_DEFAULTS_ONLY else Prompt.ask("Tags (comma separated)", default="")
     tags = [tag.strip() for tag in tags_input.split(",") if tag.strip()]
     entry = journal_controller.add_entry(text, entry_type=entry_type, tags=tags, when=when)
     console.print(Panel(f"Saved {entry.entry_type} entry for {entry.date} {entry.time}.", title="Journal"))
@@ -146,7 +162,11 @@ def _capture_entry(entry_type: str, args: str) -> None:
 
 
 def _handle_search(args: str) -> None:
-    query = args.strip() or Prompt.ask("What would you like to find?")
+    query = args.strip()
+    if not query and PROMPT_DEFAULTS_ONLY:
+        console.print("[yellow]Search requires a query when running non-interactively.[/]")
+        return
+    query = query or Prompt.ask("What would you like to find?")
     results = journal_controller.search(query)
     if not results:
         console.print("[yellow]No matching memories yet.[/]")
@@ -197,7 +217,10 @@ def _handle_summarize(args: str) -> None:
 def _handle_export(args: str) -> None:
     parts = args.split()
     if not parts:
-        format_choice = Prompt.ask("Export format", choices=["markdown", "pdf"], default="markdown")
+        if PROMPT_DEFAULTS_ONLY:
+            format_choice = "markdown"
+        else:
+            format_choice = Prompt.ask("Export format", choices=["markdown", "pdf"], default="markdown")
     else:
         format_choice = parts[0]
     if len(parts) > 1:
@@ -209,6 +232,8 @@ def _handle_export(args: str) -> None:
 
 
 def _confirm_overwrite(target: str) -> bool:
+    if PROMPT_DEFAULTS_ONLY:
+        return False
     return Confirm.ask(f"{target} already exists. Overwrite?", default=False)
 
 
@@ -316,9 +341,15 @@ def _handle_sync(args: str) -> None:
 
 def _handle_teach(args: str) -> None:
     parts = args.split()
+    if not parts and PROMPT_DEFAULTS_ONLY:
+        console.print("[yellow]Provide language and content when scripting /teach.[/]")
+        return
     language = parts[0] if parts else Prompt.ask("Language", choices=list(trainer.LANGUAGE_MAP.keys()))
     content = " ".join(parts[1:]) or _prompt_multiline()
-    category = Prompt.ask("Category", choices=["example", "error", "tip"], default="example")
+    if PROMPT_DEFAULTS_ONLY:
+        category = "example"
+    else:
+        category = Prompt.ask("Category", choices=["example", "error", "tip"], default="example")
     trainer_controller.teach(language, content, category=category)
     console.print(Panel(f"Stored {category} for {language} from manual teaching.", title="Trainer"))
     VOICE.speak("Training updated")
@@ -327,11 +358,18 @@ def _handle_teach(args: str) -> None:
 def _handle_remember(args: str) -> None:
     parts = args.split()
     if not parts:
+        if PROMPT_DEFAULTS_ONLY:
+            console.print("[yellow]Provide language and query when scripting /remember.[/]")
+            return
         language = Prompt.ask("Language", choices=list(trainer.LANGUAGE_MAP.keys()))
         prompt = Prompt.ask("What should I recall?")
     else:
         language = parts[0]
-        prompt = " ".join(parts[1:]) or Prompt.ask("What should I recall?")
+        remainder = " ".join(parts[1:])
+        if not remainder and PROMPT_DEFAULTS_ONLY:
+            console.print("[yellow]Provide a search prompt when scripting /remember.[/]")
+            return
+        prompt = remainder or Prompt.ask("What should I recall?")
     results = trainer_controller.query(language, prompt)
     if not results:
         console.print("[yellow]Nothing in the training set yet. Try /teach first.[/]")
@@ -344,11 +382,18 @@ def _handle_remember(args: str) -> None:
 def _handle_code(args: str) -> None:
     parts = args.split()
     if not parts:
+        if PROMPT_DEFAULTS_ONLY:
+            console.print("[yellow]Provide language and keyword when scripting /code.[/]")
+            return
         language = Prompt.ask("Language", choices=list(trainer.LANGUAGE_MAP.keys()))
         prompt = Prompt.ask("Keyword")
     else:
         language = parts[0]
-        prompt = " ".join(parts[1:]) or Prompt.ask("Keyword")
+        remainder = " ".join(parts[1:])
+        if not remainder and PROMPT_DEFAULTS_ONLY:
+            console.print("[yellow]Provide a keyword when scripting /code.[/]")
+            return
+        prompt = remainder or Prompt.ask("Keyword")
     results = trainer_controller.query(language, prompt)
     if not results:
         console.print("[yellow]No examples found. Teach me with /teach <language> first.[/]")
@@ -389,21 +434,33 @@ def _handle_settings(args: str) -> None:
         CONTEXT.config = CONFIG
         return
     if subcommand == "voice":
-        tts = Confirm.ask("Enable text to speech?", default=CONFIG.get("voice", {}).get("tts", False))
-        stt = Confirm.ask("Enable speech to text?", default=CONFIG.get("voice", {}).get("stt", False))
+        if PROMPT_DEFAULTS_ONLY:
+            tts = CONFIG.get("voice", {}).get("tts", False)
+            stt = CONFIG.get("voice", {}).get("stt", False)
+        else:
+            tts = Confirm.ask("Enable text to speech?", default=CONFIG.get("voice", {}).get("tts", False))
+            stt = Confirm.ask("Enable speech to text?", default=CONFIG.get("voice", {}).get("stt", False))
         settings_controller.toggle_voice(tts=tts, stt=stt)
         console.print("Voice preferences saved. Re-run Solace to reload engines.")
         return
     if subcommand == "tone":
-        tone = parts[1] if len(parts) > 1 else Prompt.ask(
-            "Tone", choices=["friendly", "quiet", "verbose"], default=CONFIG.get("tone", "friendly")
-        )
+        if len(parts) > 1:
+            tone = parts[1]
+        elif PROMPT_DEFAULTS_ONLY:
+            tone = CONFIG.get("tone", "friendly")
+        else:
+            tone = Prompt.ask("Tone", choices=["friendly", "quiet", "verbose"], default=CONFIG.get("tone", "friendly"))
         CONFIG = update_tone(CONFIG, tone)
         CONTEXT.config = CONFIG
         console.print(f"Tone set to {tone}.")
         return
     if subcommand == "alias":
-        alias = parts[1] if len(parts) > 1 else Prompt.ask("Alias", default=CONFIG.get("alias", "solace"))
+        if len(parts) > 1:
+            alias = parts[1]
+        elif PROMPT_DEFAULTS_ONLY:
+            alias = CONFIG.get("alias", "solace")
+        else:
+            alias = Prompt.ask("Alias", default=CONFIG.get("alias", "solace"))
         CONFIG = update_alias(CONFIG, alias)
         CONTEXT.config = CONFIG
         console.print(f"Alias stored as {alias}. Re-run install.py --alias {alias} to update launchers.")
@@ -507,6 +564,46 @@ COLON_TYPES = {
 }
 
 
+def _process_command(raw: str, *, show_exit_message: bool = True) -> bool:
+    text = raw.strip()
+    if not text:
+        return True
+    if text.lower() in {"exit", "quit"}:
+        if show_exit_message:
+            console.print("[green]Take care.[/]")
+        return False
+    if text.startswith("/"):
+        name, _, remainder = text[1:].partition(" ")
+        handler = COMMANDS.get(name.lower())
+        if handler is None:
+            console.print(f"[red]Unknown command:[/] {name}")
+            return True
+        handler(remainder)
+        return True
+    if text.split()[0].lower() in COLON_TYPES:
+        prefix, _, remainder = text.partition(" ")
+        _capture_entry(COLON_TYPES[prefix.lower()], remainder)
+        return True
+    _capture_entry("diary", text)
+    return True
+
+
+def run_commands(commands: Iterable[str], *, accept_defaults: bool = False) -> None:
+    console.print(Panel(f"Welcome back, {PROFILE.get('name', 'Friend')}!", title="Solace"))
+    _verify_security()
+    console.print("Executing scripted commands. Type /help for options in interactive mode.")
+
+    with _defaulting_prompts(accept_defaults):
+        for raw in commands:
+            if raw is None:
+                continue
+            if not _process_command(raw, show_exit_message=False):
+                console.print("[green]Take care.[/]")
+                break
+
+    console.print(f"[cyan]Session log stored at {SESSION_LOG}[/]")
+
+
 def run_cli() -> None:
     console.print(Panel(f"Welcome back, {PROFILE.get('name', 'Friend')}!", title="Solace"))
     _verify_security()
@@ -520,25 +617,8 @@ def run_cli() -> None:
             break
         if raw is None:
             continue
-        text = raw.strip()
-        if not text:
-            continue
-        if text.lower() in {"exit", "quit"}:
-            console.print("[green]Take care.[/]")
+        if not _process_command(raw):
             break
-        if text.startswith("/"):
-            name, _, remainder = text[1:].partition(" ")
-            handler = COMMANDS.get(name.lower())
-            if handler is None:
-                console.print(f"[red]Unknown command:[/] {name}")
-                continue
-            handler(remainder)
-            continue
-        if text.split()[0].lower() in COLON_TYPES:
-            prefix, _, remainder = text.partition(" ")
-            _capture_entry(COLON_TYPES[prefix.lower()], remainder)
-            continue
-        _capture_entry("diary", text)
 
     console.print(f"[cyan]Session log stored at {SESSION_LOG}[/]")
 
@@ -546,7 +626,36 @@ def run_cli() -> None:
 def main(argv: Optional[list[str]] = None) -> None:
     parser = argparse.ArgumentParser(description="Solace personal assistant")
     parser.add_argument("--tui", action="store_true", help="Launch the Textual user interface")
+    parser.add_argument(
+        "-c",
+        "--command",
+        action="append",
+        help="Run a single Solace command non-interactively (can be specified multiple times)",
+    )
+    parser.add_argument(
+        "--command-file",
+        type=Path,
+        help="Read newline-delimited commands from a file for non-interactive execution",
+    )
+    parser.add_argument(
+        "--accept-defaults",
+        action="store_true",
+        help="Use suggested defaults instead of prompting when running scripted commands",
+    )
     args = parser.parse_args(argv)
+
+    scripted_commands: list[str] = []
+    if args.command:
+        scripted_commands.extend(args.command)
+    if args.command_file:
+        if not args.command_file.exists():
+            parser.error(f"Command file not found: {args.command_file}")
+        scripted_commands.extend(
+            [line.strip() for line in args.command_file.read_text(encoding="utf-8").splitlines() if line.strip()]
+        )
+
+    if args.tui and scripted_commands:
+        parser.error("The --tui option cannot be combined with scripted commands.")
 
     if args.tui:
         _verify_security()
@@ -559,6 +668,10 @@ def main(argv: Optional[list[str]] = None) -> None:
             voice=VOICE,
         )
         app.run()
+        return
+
+    if scripted_commands:
+        run_commands(scripted_commands, accept_defaults=args.accept_defaults)
         return
 
     run_cli()

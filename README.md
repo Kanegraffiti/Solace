@@ -38,6 +38,16 @@ Solace is an offline command line companion for journaling, quick notes and a sm
    ```
 4. Type `/help` in the prompt to list commands. Settings such as password protection, voice toggles or response tone live under `/settings`.
 
+### Scripted usage
+
+You can drive Solace non-interactively for automation or quick exports:
+
+```bash
+solace --command "/diary Quick capture" --command "/export markdown ~/journal.md" --accept-defaults
+```
+
+Provide `--command` multiple times or use `--command-file path/to/commands.txt` with one command per line. When `--accept-defaults` is set, Solace will use suggested dates/times and empty tags instead of prompting for input.
+
 See [docs/linux_setup.md](docs/linux_setup.md) and [docs/termux_setup.md](docs/termux_setup.md) for manual dependency notes.
 
 ## Quality & Testing
