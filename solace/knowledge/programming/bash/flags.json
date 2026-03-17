@@ -1,0 +1,18 @@
+{
+  "-a": "Include hidden files (dotfiles).",
+  "-l": "Use long listing format.",
+  "-h": "Human readable sizes with -l for many tools.",
+  "-R": "Apply command recursively to subdirectories.",
+  "-type": "Filter by type (f for file, d for directory) in find.",
+  "-name": "Match file names in find.",
+  "-maxdepth": "Limit recursion depth in find.",
+  "-i": "Case-insensitive matching.",
+  "-r": "Recursive search in grep.",
+  "-n": "Show line numbers in grep output.",
+  "-E": "Use extended regular expressions in grep.",
+  "-c": "Create archive in tar.",
+  "-x": "Extract archive in tar.",
+  "-f": "Specify archive filename in tar.",
+  "-z": "Use gzip compression in tar.",
+  "+x": "Add executable permission for file owner/group/others depending on umask and mode."
+}

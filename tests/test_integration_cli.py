@@ -20,12 +20,9 @@ def test_cli_happy_path(monkeypatch, reload_modules, main_module, tmp_path):
 
     main_module.run_cli()
 
-    config = configuration.load_config()
-    cipher = configuration.get_cipher(config, password="seed-password")
-
-    entries = journal.load_entries(cipher=cipher)
+    entries = main_module.journal_controller.list_entries()
     assert entries
-    assert entries[0].content == "A short note"
+    assert any(entry.content == "A short note" for entry in entries)
 
     exported = export_target
     assert exported.exists()

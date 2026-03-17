@@ -1,0 +1,38 @@
+[
+  {
+    "topic": "pipe",
+    "aliases": ["pipes", "|"],
+    "summary": "A pipe (|) sends stdout of the left command to stdin of the right command.",
+    "examples": ["ps aux | grep python", "cat file.txt | wc -l"]
+  },
+  {
+    "topic": "redirect",
+    "aliases": [">", ">>", "redirection"],
+    "summary": "> writes output to a file (overwrite). >> appends output to a file.",
+    "examples": ["echo 'hello' > out.txt", "echo 'next' >> out.txt"]
+  },
+  {
+    "topic": "single vs double quotes",
+    "aliases": ["quoting", "single quote", "double quote"],
+    "summary": "Single quotes keep text literal. Double quotes still expand variables and command substitution.",
+    "examples": ["echo '$HOME'", "echo \"$HOME\""]
+  },
+  {
+    "topic": "command substitution",
+    "aliases": ["$()", "subshell output"],
+    "summary": "Command substitution runs a command and inserts its output, usually with $(...).",
+    "examples": ["today=$(date +%F)", "echo \"Files: $(ls | wc -l)\""]
+  },
+  {
+    "topic": "chmod",
+    "aliases": ["permissions", "file mode"],
+    "summary": "chmod changes read/write/execute permission bits for files and directories.",
+    "examples": ["chmod +x script.sh", "chmod 644 notes.txt"]
+  },
+  {
+    "topic": "grep vs find",
+    "aliases": ["difference between grep and find"],
+    "summary": "find locates files/paths by metadata, while grep searches text content inside files or streams.",
+    "examples": ["find . -name '*.log'", "grep -R 'ERROR' ."]
+  }
+]

@@ -14,7 +14,10 @@ Solace commands all start with `/`. The launcher also accepts `--speak` and `--l
 | `/sync [backend] [--dry-run]` | Send the encrypted archive to the configured backend (local, s3 or webdav). |
 | `/teach <language> [text]` | Store a code/example snippet manually. |
 | `/remember <language> <query>` | Retrieve stored snippets matching the query. |
-| `/code <language> <keyword>` | Display snippets with syntax highlighting. |
+| `/code <language> <keyword>` | Display snippets with syntax highlighting. Bash now supports deterministic intent-to-command generation, script templates, placeholders, and safety warnings. |
+| `/ask bash <topic>` | Explain Bash concepts such as pipes, redirects, quoting, and command substitution. |
+| `/debug <error>` | Match common Bash errors to likely causes and concise fixes. |
+| `/explain [bash] <command>` | Parse and explain Bash command tokens, flags, pipes, and redirects. |
 | `/mimic <text>` | Generate a rule-based conversational reply. |
 | `/listen` | Capture speech input when STT is enabled. |
 | `/settings [subcommand]` | Configure password, voice, tone, alias, backups and fallback mode. |

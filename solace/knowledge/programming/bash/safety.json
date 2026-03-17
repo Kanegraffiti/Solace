@@ -1,0 +1,51 @@
+[
+  {
+    "id": "rm_rf",
+    "pattern": "rm -rf",
+    "severity": "high",
+    "message": "Recursive forced delete can irreversibly remove large directory trees.",
+    "safer_alternative": "Use rm -ri <dir> for confirmation or test with ls first."
+  },
+  {
+    "id": "sudo_rm",
+    "pattern": "sudo rm",
+    "severity": "high",
+    "message": "sudo with rm removes files as root and bypasses normal protection.",
+    "safer_alternative": "Double-check path with pwd and ls. Consider moving files first."
+  },
+  {
+    "id": "chmod_777_recursive",
+    "pattern": "chmod -R 777",
+    "severity": "high",
+    "message": "Recursive 777 grants write/execute to everyone and can expose sensitive files.",
+    "safer_alternative": "Use least-privilege permissions like 755/644 per use case."
+  },
+  {
+    "id": "overwrite_redirect",
+    "pattern": ">",
+    "severity": "medium",
+    "message": "Overwrite redirection (>) truncates target files.",
+    "safer_alternative": "Use >> to append, or back up files first."
+  },
+  {
+    "id": "mkfs",
+    "pattern": "mkfs",
+    "severity": "high",
+    "message": "mkfs formats storage devices and destroys existing data.",
+    "safer_alternative": "Verify target device with lsblk before running."
+  },
+  {
+    "id": "dd",
+    "pattern": "dd ",
+    "severity": "high",
+    "message": "dd can overwrite entire devices if input/output paths are wrong.",
+    "safer_alternative": "Run a dry check with lsblk and echo paths before execution."
+  },
+  {
+    "id": "kill9_all",
+    "pattern": "kill -9",
+    "severity": "medium",
+    "message": "SIGKILL prevents graceful shutdown and can corrupt state.",
+    "safer_alternative": "Try kill -15 first and target a specific PID."
+  }
+]

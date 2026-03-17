@@ -1,0 +1,41 @@
+[
+  {
+    "name": "backup a folder",
+    "keywords": ["backup", "folder", "script", "archive"],
+    "script": "#!/usr/bin/env bash\nset -euo pipefail\n\nSOURCE_DIR=\"<source_dir>\"\nBACKUP_DIR=\"<backup_dir>\"\nSTAMP=$(date +%Y%m%d-%H%M%S)\nmkdir -p \"$BACKUP_DIR\"\ntar -czf \"$BACKUP_DIR/backup-$STAMP.tar.gz\" -C \"$SOURCE_DIR\" .\necho \"Backup created: $BACKUP_DIR/backup-$STAMP.tar.gz\"",
+    "explanation": "Creates timestamped tar.gz backups for a source directory.",
+    "placeholders": {
+      "<source_dir>": "Directory to back up.",
+      "<backup_dir>": "Directory that stores backup archives."
+    },
+    "safety": "Review SOURCE_DIR and BACKUP_DIR before running to avoid writing in wrong locations."
+  },
+  {
+    "name": "loop through files",
+    "keywords": ["loop", "files", "for", "script"],
+    "script": "#!/usr/bin/env bash\nset -euo pipefail\n\nfor file in <dir>/*; do\n  [ -f \"$file\" ] || continue\n  echo \"Processing: $file\"\ndone",
+    "explanation": "Loops through regular files in a directory safely.",
+    "placeholders": {
+      "<dir>": "Directory containing files to process."
+    }
+  },
+  {
+    "name": "rename files by extension",
+    "keywords": ["rename", "extension", "files", "loop"],
+    "script": "#!/usr/bin/env bash\nset -euo pipefail\n\nfor file in <dir>/*.txt; do\n  [ -e \"$file\" ] || continue\n  mv -- \"$file\" \"${file%.txt}.md\"\ndone",
+    "explanation": "Renames .txt files to .md using parameter expansion.",
+    "placeholders": {
+      "<dir>": "Directory containing .txt files."
+    },
+    "safety": "Test first with echo mv ... to preview rename operations."
+  },
+  {
+    "name": "check if file exists in a script",
+    "keywords": ["check", "file exists", "if", "script"],
+    "script": "#!/usr/bin/env bash\nset -euo pipefail\n\nTARGET=\"<file>\"\nif [ -f \"$TARGET\" ]; then\n  echo \"Found: $TARGET\"\nelse\n  echo \"Missing: $TARGET\"\nfi",
+    "explanation": "Checks whether a file exists and prints a clear status.",
+    "placeholders": {
+      "<file>": "Path to the file to check."
+    }
+  }
+]

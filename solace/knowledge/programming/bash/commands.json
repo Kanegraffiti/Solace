@@ -1,0 +1,51 @@
+[
+  {
+    "command": "ls",
+    "description": "List directory contents.",
+    "common_flags": ["-a", "-l", "-h"],
+    "safe_notes": ["Use explicit paths when scripting."],
+    "examples": ["ls -la", "ls -lh <dir>"]
+  },
+  {
+    "command": "find",
+    "description": "Search for files and directories by filters.",
+    "common_flags": ["-type", "-name", "-maxdepth"],
+    "safe_notes": ["Quote name patterns like '*.py' to avoid shell expansion."],
+    "examples": ["find . -type f -name '*.py'", "find <dir> -type d -name '<pattern>'"]
+  },
+  {
+    "command": "chmod",
+    "description": "Change file mode bits (permissions).",
+    "common_flags": ["-R", "+x"],
+    "safe_notes": ["Prefer least privilege; avoid chmod -R 777 unless absolutely required."],
+    "examples": ["chmod +x <filename>", "chmod 644 <filename>"]
+  },
+  {
+    "command": "grep",
+    "description": "Search text using patterns.",
+    "common_flags": ["-i", "-r", "-n", "-E"],
+    "safe_notes": ["Use quoted patterns to avoid accidental glob expansion."],
+    "examples": ["grep -n '<pattern>' <file>", "grep -R '<pattern>' <dir>"]
+  },
+  {
+    "command": "tar",
+    "description": "Create or extract archives.",
+    "common_flags": ["-c", "-x", "-f", "-z"],
+    "safe_notes": ["Use explicit archive names to avoid overwriting important files."],
+    "examples": ["tar -czf <archive>.tar.gz <folder>", "tar -xzf <archive>.tar.gz"]
+  },
+  {
+    "command": "ps",
+    "description": "Display running processes.",
+    "common_flags": ["aux", "-ef"],
+    "safe_notes": ["Filter output with grep to reduce noise."],
+    "examples": ["ps aux | grep <process_name>"]
+  },
+  {
+    "command": "wc",
+    "description": "Print counts for lines, words, and bytes.",
+    "common_flags": ["-l", "-w", "-c"],
+    "safe_notes": ["Check file paths first to avoid counting unexpected inputs."],
+    "examples": ["wc -l <file>", "wc -w <file>"]
+  }
+]

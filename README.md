@@ -17,6 +17,7 @@ Solace is an offline command line companion for journaling, quick notes and a sm
 * **Export journals** – `/export` can produce Markdown or PDF summaries of everything you have written.
 * **Back up or sync** – `/backup` creates encrypted restore points while `/sync` can push archives to optional local, S3 or WebDAV destinations with dry-run safeguards.
 * **Teach snippets** – `/teach`, `/remember` and `/code` manage a lightweight library of language-specific examples stored in `~/.solace/training`.
+* **Bash-first CLI help** – `/code bash ...` now performs deterministic intent lookup with placeholders and safety notes, `/ask bash ...` explains shell concepts, `/explain ...` breaks down commands token-by-token, and `/debug ...` maps frequent Bash errors to practical fixes.
 * **Rule-based mimicry** – `/mimic` replies using a configurable phrase guide and tone, providing a friendly echo of your writing.
 * **Optional voice helpers** – toggle text-to-speech or speech recognition in `/settings` once the extra packages are installed.
 
@@ -69,6 +70,7 @@ Coverage reports are written to `htmlcov/index.html` for local inspection. The `
 * `main.py` – interactive CLI loop that handles commands and session logging.
 * `journal.py` – storage helpers for diary, note, todo and quote entries with optional encryption.
 * `trainer.py` – manages language-tagged knowledge snippets and saved training sessions.
+* `solace/knowledge/programming/bash/` – structured Bash command, pattern, script, safety, and error knowledge files powering offline Bash intelligence.
 * `mimic.py` – rule-based conversational replies with configurable fallback modes.
 * `solace/` – shared modules for configuration, storage paths and memory search utilities.
 * `web/` – local-only FastAPI + React stack for browsing diaries, filtering tags, exporting entries and managing snippets.
