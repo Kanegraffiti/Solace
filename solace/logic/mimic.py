@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import random
 import re
+from urllib import error, request
+import json
 from collections import Counter
 from dataclasses import dataclass
 from typing import Iterable, List
@@ -191,6 +193,15 @@ def mimic_reply(prompt: str, profile: PersonaProfile | None = None) -> str:
     if not profile.ready:
         return profile.incubation_message or "I'm still learning from you."
 
+    llm_reply = _llm_reply(prompt, profile)
+    if llm_reply:
+        return llm_reply
+
+    return _template_reply(prompt, profile)
+
+
+def _template_reply(prompt: str, profile: PersonaProfile) -> str:
+
     name = SETTINGS.get("mimic_persona") or SETTINGS.get("name") or "I'm"
     intro_options = [
         f"It's {name}, your Solace clone, checking in.",
@@ -230,3 +241,41 @@ def mimic_reply(prompt: str, profile: PersonaProfile | None = None) -> str:
 
     parts = [intro, mood_line, theme_line, phrase_line, profile.voice_hint, reflection, closing]
     return " ".join(part for part in parts if part)
+
+
+def _llm_reply(prompt: str, profile: PersonaProfile) -> str | None:
+    provider = (SETTINGS.get("mimic_model_provider") or "ollama").strip().lower()
+    if provider != "ollama":
+        return None
+
+    model = (SETTINGS.get("mimic_model") or "llama3.2:3b-instruct-q4_K_M").strip()
+    endpoint = (SETTINGS.get("mimic_ollama_url") or "http://127.0.0.1:11434/api/generate").strip()
+    name = SETTINGS.get("mimic_persona") or SETTINGS.get("name") or "the user"
+
+    system_prompt = (
+        "You are Solace, a warm journaling companion. "
+        f"You have read {name}'s journal entries and should respond like a grounded, caring friend. "
+        f"Dominant mood: {profile.dominant_mood} ({profile.mood_ratio:.0%} of entries). "
+        f"Recurring themes: {', '.join(profile.themes[:8]) or 'none yet'}. "
+        f"Voice hint: {profile.voice_hint}. "
+        "Signature phrases from their writing:\n"
+        + "\n".join(f"- {phrase}" for phrase in profile.signature_phrases[:5])
+    )
+    payload = {
+        "model": model,
+        "prompt": f"{system_prompt}\n\nUser message: {prompt}\nAssistant reply:",
+        "stream": False,
+        "options": {
+            "temperature": 0.7,
+        },
+    }
+    raw = json.dumps(payload).encode("utf-8")
+    req = request.Request(endpoint, data=raw, headers={"Content-Type": "application/json"})
+    try:
+        with request.urlopen(req, timeout=12) as response:
+            data = json.loads(response.read().decode("utf-8"))
+    except (TimeoutError, error.URLError, error.HTTPError, json.JSONDecodeError):
+        return None
+
+    text = (data.get("response") or "").strip()
+    return text or None

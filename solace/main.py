@@ -5,6 +5,7 @@ import sys
 from . import commands
 from .commands import dispatch
 from .config import CONFIG_FILE, DEFAULT_MODE, SETTINGS, save_settings, verify_password
+from . import config as legacy_config
 from .modes.diary_mode import add_entry
 from .modes.chat_mode import chat, ChatLockedError
 from .logic.notes import add_note
@@ -40,12 +41,12 @@ def _setup() -> None:
     password_hint = ""
     if use_password:
         import getpass
-        import hashlib
         while True:
             pw1 = getpass.getpass("Set password: ")
             pw2 = getpass.getpass("Confirm password: ")
             if pw1 == pw2:
-                password_hash = hashlib.sha256(pw1.encode("utf-8")).hexdigest()
+                salt = legacy_config._ensure_password_salt(SETTINGS)
+                password_hash = legacy_config._hash_password(pw1, salt)
                 break
             print("Passwords do not match. Try again.")
         password_hint = input("Password hint (optional): ").strip()
@@ -64,6 +65,7 @@ def _setup() -> None:
         "mimic_persona": mimic_persona,
         "password_hash": password_hash,
         "password_hint": password_hint,
+        "password_salt": SETTINGS.get("password_salt", ""),
     }
     save_settings(cfg)
     if tts_enabled or stt_enabled:

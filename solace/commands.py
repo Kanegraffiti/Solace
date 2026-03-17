@@ -28,6 +28,7 @@ from .logic.knowledge_index import add_entry as knowledge_add, get_all as knowle
 from .utils.encryption import decrypt_bytes
 from .utils.keys import get_key
 from .config import SETTINGS, save_settings
+from . import config as legacy_config
 from .settings_manager import enable_encryption
 
 try:
@@ -459,13 +460,14 @@ def cmd_mode(args: str) -> None:
     pwd_hash = SETTINGS.get("password_hash", "")
     hint = SETTINGS.get("password_hint", "")
     if use_pass:
-        import getpass, hashlib
+        import getpass
         if not pwd_hash:
             while True:
                 p1 = getpass.getpass("Set password: ")
                 p2 = getpass.getpass("Confirm password: ")
                 if p1 == p2:
-                    pwd_hash = hashlib.sha256(p1.encode("utf-8")).hexdigest()
+                    salt = legacy_config._ensure_password_salt(SETTINGS)
+                    pwd_hash = legacy_config._hash_password(p1, salt)
                     break
                 print("Passwords do not match.")
             hint = input("Password hint (optional): ").strip()
@@ -473,12 +475,15 @@ def cmd_mode(args: str) -> None:
             change = _ask_yes_no("Change password", False)
             if change:
                 old = getpass.getpass("Current password: ")
-                if hashlib.sha256(old.encode("utf-8")).hexdigest() == pwd_hash:
+                salt = legacy_config._ensure_password_salt(SETTINGS)
+                old_ok = legacy_config.hmac.compare_digest(legacy_config._hash_password(old, salt), pwd_hash)
+                old_ok = old_ok or legacy_config.hmac.compare_digest(legacy_config.hashlib.sha256(old.encode("utf-8")).hexdigest(), pwd_hash)
+                if old_ok:
                     while True:
                         n1 = getpass.getpass("New password: ")
                         n2 = getpass.getpass("Confirm password: ")
                         if n1 == n2:
-                            pwd_hash = hashlib.sha256(n1.encode("utf-8")).hexdigest()
+                            pwd_hash = legacy_config._hash_password(n1, salt)
                             break
                         print("Passwords do not match.")
                     hint = input("Password hint (optional): ").strip()

@@ -9,7 +9,7 @@ merged in when loading.
 
 The module also implements lightweight password management and exposes helper
 utilities for deriving Fernet keys that are shared by the journaling,
-knowledge, and memory subsystems.  Passwords are hashed using SHA-256 so that
+knowledge, and memory subsystems.  Passwords are hashed using PBKDF2-HMAC-SHA256 so that
 the clear text is never written to disk.  A dedicated 32-byte salt is stored
 alongside the config for key derivation with PBKDF2.
 """
@@ -18,6 +18,7 @@ from __future__ import annotations
 
 import getpass
 import hashlib
+import hmac
 import json
 import os
 from pathlib import Path
@@ -155,6 +156,12 @@ def _ensure_key_seed(config: Dict[str, Any]) -> str:
     return seed
 
 
+def _pbkdf2_hex(password: str, salt_hex: str, iterations: int = 210_000) -> str:
+    salt = bytes.fromhex(salt_hex)
+    digest = hashlib.pbkdf2_hmac("sha256", password.encode("utf-8"), salt, iterations)
+    return digest.hex()
+
+
 def _derive_key(password: str, salt_hex: str) -> bytes:
     salt = bytes.fromhex(salt_hex)
     kdf = PBKDF2HMAC(
@@ -188,9 +195,16 @@ def verify_password(config: Dict[str, Any]) -> str | None:
     stored_hash = security.get("password_hash") or ""
     if not stored_hash:
         return None
+    salt = _ensure_salt(config)
     for _attempt in range(3):
         guess = getpass.getpass("Enter Solace password: ")
-        if hashlib.sha256(guess.encode("utf-8")).hexdigest() == stored_hash:
+        candidate = _pbkdf2_hex(guess, salt)
+        if hmac.compare_digest(candidate, stored_hash):
+            return guess
+        legacy = hashlib.sha256(guess.encode("utf-8")).hexdigest()
+        if hmac.compare_digest(legacy, stored_hash):
+            security["password_hash"] = candidate
+            save_config(config)
             return guess
         print("Incorrect password. Try again.")
     raise PermissionError("Maximum password attempts exceeded")
@@ -217,8 +231,8 @@ def set_password(config: Dict[str, Any]) -> Dict[str, Any]:
             print("Passwords do not match. Try again.")
             continue
         security["password_enabled"] = True
-        security["password_hash"] = hashlib.sha256(pw.encode("utf-8")).hexdigest()
-        _ensure_salt(config)
+        salt = _ensure_salt(config)
+        security["password_hash"] = _pbkdf2_hex(pw, salt)
         save_config(config)
         print("Password saved.")
         return config
