@@ -1,5 +1,7 @@
 import json
 import hashlib
+import hmac
+import os
 import getpass
 import sys
 from pathlib import Path
@@ -21,6 +23,7 @@ DEFAULT_CONFIG = {
     "mimic_persona": "",
     "password_hash": "",
     "password_hint": "",
+    "password_salt": "",
 }
 
 
@@ -41,6 +44,20 @@ def save_settings(data: dict) -> None:
     SETTINGS.update(data)
 
 
+
+
+def _ensure_password_salt(settings: dict) -> str:
+    salt = settings.get("password_salt", "")
+    if not salt:
+        salt = os.urandom(16).hex()
+        settings["password_salt"] = salt
+        save_settings(settings)
+    return salt
+
+
+def _hash_password(password: str, salt_hex: str) -> str:
+    return hashlib.pbkdf2_hmac("sha256", password.encode("utf-8"), bytes.fromhex(salt_hex), 210_000).hex()
+
 def verify_password(settings: dict) -> None:
     """Prompt for the password if enabled."""
     hash_val = settings.get("password_hash")
@@ -49,7 +66,13 @@ def verify_password(settings: dict) -> None:
     hint = settings.get("password_hint", "")
     for _ in range(3):
         pw = getpass.getpass("Enter Solace password: ")
-        if hashlib.sha256(pw.encode("utf-8")).hexdigest() == hash_val:
+        salt = _ensure_password_salt(settings)
+        if hmac.compare_digest(_hash_password(pw, salt), hash_val):
+            return
+        # Backwards compatibility with legacy SHA-256 hashes.
+        if hmac.compare_digest(hashlib.sha256(pw.encode("utf-8")).hexdigest(), hash_val):
+            settings["password_hash"] = _hash_password(pw, salt)
+            save_settings(settings)
             return
         print("Incorrect password.")
         if hint:
