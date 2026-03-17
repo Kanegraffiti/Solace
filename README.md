@@ -1,102 +1,73 @@
-<p align="center">
-  <img src="assets/banner.png" alt="Solace banner" style="width:100%;max-width:100%;height:auto;" />
-</p>
-
 # Solace
 
-![CI](https://github.com/Kanegraffiti/Solace/actions/workflows/ci.yml/badge.svg)
-![Coverage](assets/coverage.svg)
+Solace is an offline, local-first journaling and knowledge companion.
 
-Solace is an offline command line companion for journaling, quick notes and a small personal code/reference library. All data is stored locally inside your home directory so your writing never leaves your device.
+It includes:
+- a **CLI app** for journaling, notes, todos, quotes, memory search, and code/snippet recall;
+- a **local web app** (`web/`) for browsing and managing entries/snippets on your machine;
+- optional encryption, backup, and sync helpers.
 
-## What Solace Can Do Today
+All core data is stored under your home directory (for example `~/.solace/` and `~/.solaceconfig.json`).
 
-* **Capture entries** – create dated `/diary`, `/notes`, `/todo` or `/quote` entries with optional tags. Entries are stored as JSON under `~/.solace/journal`.
-* **Remember securely** – enable password protection and Fernet-based encryption so saved entries stay private.
-* **Search memories** – `/search` looks through diary text and tags with fuzzy matching to surface relevant entries.
-* **Export journals** – `/export` can produce Markdown or PDF summaries of everything you have written.
-* **Back up or sync** – `/backup` creates encrypted restore points while `/sync` can push archives to optional local, S3 or WebDAV destinations with dry-run safeguards.
-* **Teach snippets** – `/teach`, `/remember` and `/code` manage a lightweight library of language-specific examples stored in `~/.solace/training`.
-* **Bash-first CLI help** – `/code bash ...` now performs deterministic intent lookup with placeholders and safety notes, `/ask bash ...` explains shell concepts, `/explain ...` breaks down commands token-by-token, and `/debug ...` maps frequent Bash errors to practical fixes.
-* **Rule-based mimicry** – `/mimic` replies using a configurable phrase guide and tone, providing a friendly echo of your writing.
-* **Optional voice helpers** – toggle text-to-speech or speech recognition in `/settings` once the extra packages are installed.
-
-## Installation
-
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/Kanegraffiti/Solace.git
-   cd Solace
-   ```
-2. Install the Python requirements. The simplest route is the helper script:
-   ```bash
-   python install.py
-   ```
-   The installer detects your platform, installs dependencies from `requirements*.txt`, creates a `solace` launcher and initialises `~/.solaceconfig.json`. You can re-run it with `--alias <name>` to change the launcher name or `--skip-deps` when managing packages manually.
-3. Start Solace using the launcher (or run `python main.py`):
-   ```bash
-   solace
-   ```
-4. Type `/help` in the prompt to list commands. Settings such as password protection, voice toggles or response tone live under `/settings`.
-
-### Scripted usage
-
-You can drive Solace non-interactively for automation or quick exports:
+## Quick start
 
 ```bash
-solace --command "/diary Quick capture" --command "/export markdown ~/journal.md" --accept-defaults
+git clone https://github.com/Kanegraffiti/Solace.git
+cd Solace
+python install.py
+solace
 ```
 
-Provide `--command` multiple times or use `--command-file path/to/commands.txt` with one command per line. When `--accept-defaults` is set, Solace will use suggested dates/times and empty tags instead of prompting for input.
+If the launcher is not available yet, run:
 
-See [docs/linux_setup.md](docs/linux_setup.md) and [docs/termux_setup.md](docs/termux_setup.md) for manual dependency notes.
+```bash
+python main.py
+```
 
-## Quality & Testing
+Inside Solace, run `/help` to see available commands.
 
-The repository includes automated linting, typing and test coverage checks. Run them locally with:
+## Repository layout
+
+- `main.py` – CLI entrypoint.
+- `journal.py` – journal storage/export helpers.
+- `trainer.py` – snippet teaching and recall helpers.
+- `solace/` – shared application modules (logic, config, utilities, plugins, knowledge files).
+- `web/` – local FastAPI + React application.
+- `docs/` – user and developer documentation.
+- `tests/` – automated test suite.
+
+## Development
+
+Install dependencies:
 
 ```bash
 pip install -r requirements.txt -r requirements-dev.txt
+```
+
+Run checks:
+
+```bash
 ruff check .
 flake8 .
 mypy .
-pytest --cov=. --cov-report=term --cov-report=html
+pytest
 ```
 
-Coverage reports are written to `htmlcov/index.html` for local inspection. The `assets/coverage.svg` badge is generated from the latest coverage run using `coverage-badge`.
+## Web app (optional)
 
-## Project Tour
-
-* `main.py` – interactive CLI loop that handles commands and session logging.
-* `journal.py` – storage helpers for diary, note, todo and quote entries with optional encryption.
-* `trainer.py` – manages language-tagged knowledge snippets and saved training sessions.
-* `solace/knowledge/programming/bash/` – structured Bash command, pattern, script, safety, and error knowledge files powering offline Bash intelligence.
-* `mimic.py` – rule-based conversational replies with configurable fallback modes.
-* `solace/` – shared modules for configuration, storage paths and memory search utilities.
-* `web/` – local-only FastAPI + React stack for browsing diaries, filtering tags, exporting entries and managing snippets.
-
-Configuration and data live under `~/.solaceconfig.json` and `~/.solace/`. The application creates folders as needed and never contacts remote services.
-
-## Web interface (local only)
-
-A companion web UI lives in `web/`. It reuses the Solace password/encryption settings for authentication and is designed to stay on localhost.
+From the repo root:
 
 ```bash
 make dev
 ```
 
-The command starts the FastAPI backend (port 8000 by default) and Vite dev server (port 4173) with hot reload. Keep both processes bound to localhost or behind a firewall—there is no remote identity provider.
+This starts the local backend and frontend dev servers.
 
 ## Documentation
 
-Guides for using, configuring and extending Solace are available in the `docs/` folder:
-
-* [overview.md](docs/overview.md) – feature overview and storage model.
-* [user_guide.md](docs/user_guide.md) – step-by-step walkthrough of commands.
-* [cli_reference.md](docs/cli_reference.md) – quick command summary.
-* [settings.md](docs/settings.md) – configuration options explained.
-* [developer_guide.md](docs/developer_guide.md) – project layout and extension tips.
-
----
-
-Solace is intentionally minimal and focused on text-first workflows. Issues and pull requests are welcome to improve the experience.
+See:
+- `docs/overview.md`
+- `docs/user_guide.md`
+- `docs/cli_reference.md`
+- `docs/settings.md`
+- `docs/developer_guide.md`
