@@ -1,12 +1,56 @@
 [
   {
     "error_message": "command not found",
-    "explanation": "The shell could not locate the command you typed.",
-    "fix": "Check that the program is installed and the path is correct."
+    "patterns": ["command not found", "not recognized as an internal or external command"],
+    "cause": "The command name is wrong or the executable is not on PATH.",
+    "fix": "Check spelling, install the tool, and verify PATH with 'echo $PATH'."
   },
   {
-    "error_message": "Permission denied",
-    "explanation": "You do not have permission to execute the file or access the directory.",
-    "fix": "Use chmod to adjust permissions or run with appropriate privileges."
+    "error_message": "permission denied",
+    "patterns": ["permission denied", "operation not permitted"],
+    "cause": "The shell process lacks permission to read, write, or execute the target.",
+    "fix": "Check ownership with 'ls -l', then adjust with chmod/chown or run with appropriate privileges."
+  },
+  {
+    "error_message": "no such file or directory",
+    "patterns": ["no such file or directory", "cannot stat"],
+    "cause": "A file path or command path does not exist from the current working directory.",
+    "fix": "Verify path with 'pwd' and 'ls'. Use absolute paths if needed."
+  },
+  {
+    "error_message": "syntax error near unexpected token",
+    "patterns": ["syntax error near unexpected token", "unexpected token"],
+    "cause": "Shell syntax is invalid (often missing quote, bracket, do/done, or semicolon).",
+    "fix": "Re-check quoting and matching pairs: if/fi, for/do/done, and parentheses."
+  },
+  {
+    "error_message": "bad substitution",
+    "patterns": ["bad substitution"],
+    "cause": "Parameter expansion is invalid for the shell version or syntax used.",
+    "fix": "Use Bash explicitly (#!/usr/bin/env bash) and validate variable expansion syntax."
+  },
+  {
+    "error_message": "too many arguments",
+    "patterns": ["too many arguments"],
+    "cause": "A test expression or command received unquoted values that split into many args.",
+    "fix": "Quote variables in tests, e.g. [ \"$var\" = \"x\" ]."
+  },
+  {
+    "error_message": "not a directory",
+    "patterns": ["not a directory"],
+    "cause": "A command expected a directory path but got a file.",
+    "fix": "Check target path type with 'ls -ld <path>'."
+  },
+  {
+    "error_message": "is a directory",
+    "patterns": ["is a directory"],
+    "cause": "A command expected a file but received a directory.",
+    "fix": "Use the correct file path or recursive flags when appropriate."
+  },
+  {
+    "error_message": "cannot execute binary file",
+    "patterns": ["cannot execute binary file"],
+    "cause": "The file is not a valid executable for this architecture or shell.",
+    "fix": "Check file type with 'file <binary>' and ensure platform compatibility."
   }
 ]

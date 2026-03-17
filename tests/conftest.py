@@ -45,6 +45,7 @@ def main_module(temp_home, reload_modules):
     sys.modules.pop("main", None)
     sys.modules.pop("tui", None)
     sys.modules.pop("tui.app", None)
+    sys.modules.pop("solace.logic.bash_intel", None)
 
     dummy_package = types.ModuleType("tui")
     dummy_package.__path__ = [str(project_root / "tui")]

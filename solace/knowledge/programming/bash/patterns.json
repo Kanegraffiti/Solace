@@ -1,0 +1,76 @@
+[
+  {
+    "intent": "list hidden files",
+    "keywords": ["list", "files", "hidden", "show all", "dotfiles"],
+    "command": "ls -la",
+    "explanation": "Lists files in long format including hidden entries.",
+    "placeholders": {}
+  },
+  {
+    "intent": "find python files",
+    "keywords": ["find", "python", "files", "py", "here"],
+    "command": "find . -type f -name '*.py'",
+    "explanation": "Finds Python files recursively from current directory.",
+    "placeholders": {}
+  },
+  {
+    "intent": "make file executable",
+    "keywords": ["make", "file", "script", "executable", "permission", "chmod"],
+    "command": "chmod +x <filename>",
+    "explanation": "Adds executable permission to a script or binary file.",
+    "placeholders": {
+      "<filename>": "Path to the file you want to execute."
+    }
+  },
+  {
+    "intent": "show running process",
+    "keywords": ["show", "running", "process", "processes", "python", "ps"],
+    "command": "ps aux | grep <process_name>",
+    "explanation": "Shows running processes and filters by name.",
+    "placeholders": {
+      "<process_name>": "Program name to filter, for example python."
+    }
+  },
+  {
+    "intent": "count lines in file",
+    "keywords": ["count", "lines", "line", "file", "wc"],
+    "command": "wc -l <file>",
+    "explanation": "Counts newline-delimited lines in a file.",
+    "placeholders": {
+      "<file>": "Input file to count lines from."
+    }
+  },
+  {
+    "intent": "count words in file",
+    "keywords": ["count", "words", "word", "file"],
+    "command": "wc -w <file>",
+    "explanation": "Counts words in a file.",
+    "placeholders": {
+      "<file>": "Input file for word counting."
+    }
+  },
+  {
+    "intent": "archive folder",
+    "keywords": ["archive", "compress", "tar", "folder", "directory"],
+    "command": "tar -czf <archive>.tar.gz <folder>",
+    "explanation": "Creates a gzip-compressed tar archive from a folder.",
+    "placeholders": {
+      "<archive>": "Base name of the output archive.",
+      "<folder>": "Folder path to archive."
+    }
+  },
+  {
+    "intent": "find jpg files",
+    "keywords": ["find", "jpg", "jpeg", "files", "images"],
+    "command": "find . -type f \\( -name '*.jpg' -o -name '*.jpeg' \\)",
+    "explanation": "Finds JPG/JPEG files recursively from current directory.",
+    "placeholders": {}
+  },
+  {
+    "intent": "find large files",
+    "keywords": ["find", "large", "big", "files", "size"],
+    "command": "find . -type f -size +100M",
+    "explanation": "Finds files larger than 100 MB under the current directory.",
+    "placeholders": {}
+  }
+]

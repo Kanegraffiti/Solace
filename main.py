@@ -20,6 +20,7 @@ from rich.table import Table
 import journal
 import trainer
 from solace import sync as sync_service
+from solace.logic import bash_intel
 from solace.configuration import (
     CONFIG_PATH,
     ensure_storage_dirs,
@@ -351,6 +352,8 @@ def _handle_teach(args: str) -> None:
     else:
         category = Prompt.ask("Category", choices=["example", "error", "tip"], default="example")
     trainer_controller.teach(language, content, category=category)
+    if language.lower() == "bash":
+        bash_intel.teach_text(content, tags=[category])
     console.print(Panel(f"Stored {category} for {language} from manual teaching.", title="Trainer"))
     VOICE.speak("Training updated")
 
@@ -370,6 +373,15 @@ def _handle_remember(args: str) -> None:
             console.print("[yellow]Provide a search prompt when scripting /remember.[/]")
             return
         prompt = remainder or Prompt.ask("What should I recall?")
+    if language.lower() in {"bash", "shell", "sh"}:
+        remembered = bash_intel.lookup_bash(prompt)
+        if remembered and remembered.source == "memory":
+            output = [f"Command:\n{remembered.command}", f"Explanation:\n- {remembered.explanation}"]
+            if remembered.safety:
+                output.append("Safety:\n" + "\n".join(f"- {warning}" for warning in remembered.safety))
+            console.print(Panel("\n\n".join(output), title="Bash memory"))
+            return
+
     results = trainer_controller.query(language, prompt)
     if not results:
         console.print("[yellow]Nothing in the training set yet. Try /teach first.[/]")
@@ -394,6 +406,24 @@ def _handle_code(args: str) -> None:
             console.print("[yellow]Provide a keyword when scripting /code.[/]")
             return
         prompt = remainder or Prompt.ask("Keyword")
+    if language.lower() in {"bash", "shell", "sh"}:
+        result = bash_intel.lookup_bash(prompt)
+        if not result:
+            console.print("[yellow]I am not fully confident. Try teaching this with /teach bash ...[/]")
+            return
+        if result.confidence < 0.45:
+            console.print("[yellow]Low confidence match. Please review before using.[/]")
+        lines = [f"Command:\n{result.command}", f"Explanation:\n- {result.explanation}"]
+        if result.placeholders:
+            placeholder_lines = [f"- {name}: {desc}" for name, desc in result.placeholders.items()]
+            lines.append("Placeholders:\n" + "\n".join(placeholder_lines))
+        if result.notes:
+            lines.append("Notes:\n" + "\n".join(f"- {note}" for note in result.notes))
+        if result.safety:
+            lines.append("Safety:\n" + "\n".join(f"- {warning}" for warning in result.safety))
+        console.print(Panel("\n\n".join(lines), title="Bash"))
+        return
+
     results = trainer_controller.query(language, prompt)
     if not results:
         console.print("[yellow]No examples found. Teach me with /teach <language> first.[/]")
@@ -517,6 +547,9 @@ def _handle_help(_: str) -> None:
     table.add_row("/teach <language>", "Add a training snippet manually")
     table.add_row("/remember <language> <query>", "Recall training notes")
     table.add_row("/code <language> <topic>", "Show code examples from training data")
+    table.add_row("/ask bash <topic>", "Explain Bash concepts like pipes or quoting")
+    table.add_row("/debug <error>", "Match common Bash errors to likely fixes")
+    table.add_row("/explain [bash] <command>", "Explain Bash command tokens and flags")
     table.add_row("/mimic", "Generate a rule-based conversation reply")
     table.add_row("/listen", "Capture voice input when STT is enabled")
     table.add_row("/settings", "Manage Solace configuration")
@@ -536,6 +569,47 @@ def _verify_security() -> None:
         sys.exit(1)
 
 
+def _handle_ask(args: str) -> None:
+    query = args.strip()
+    if not query:
+        console.print("[yellow]Usage: /ask bash <topic>[/]")
+        return
+    lowered = query.lower()
+    if lowered.startswith("bash "):
+        query = query[5:]
+    if not bash_intel.is_bash_query(query):
+        console.print("[yellow]Currently /ask is optimized for Bash topics. Prefix with 'bash'.[/]")
+        return
+    answer = bash_intel.explain_topic(query)
+    if not answer:
+        console.print("[yellow]I do not have a deterministic Bash topic answer yet. Teach one with /teach bash ...[/]")
+        return
+    console.print(Panel(answer, title="Bash concept"))
+
+
+def _handle_debug(args: str) -> None:
+    query = args.strip()
+    if not query:
+        console.print("[yellow]Usage: /debug <error message>[/]")
+        return
+    result = bash_intel.debug_bash_error(query)
+    if not result:
+        console.print("[yellow]No deterministic Bash error match found.[/]")
+        return
+    console.print(Panel(result, title="Debug"))
+
+
+def _handle_explain(args: str) -> None:
+    query = args.strip()
+    if not query:
+        console.print("[yellow]Usage: /explain [bash] <command>[/]")
+        return
+    if query.lower().startswith("bash "):
+        query = query[5:]
+    lines = bash_intel.explain_command(query.strip("\"'"))
+    console.print(Panel("\n".join(lines), title="Bash explain"))
+
+
 COMMANDS: Dict[str, Callable[[str], None]] = {
     "help": _handle_help,
     "diary": lambda args: _capture_entry("diary", args),
@@ -550,6 +624,9 @@ COMMANDS: Dict[str, Callable[[str], None]] = {
     "teach": _handle_teach,
     "remember": _handle_remember,
     "code": _handle_code,
+    "ask": _handle_ask,
+    "debug": _handle_debug,
+    "explain": _handle_explain,
     "mimic": _handle_mimic,
     "settings": _handle_settings,
     "listen": _handle_listen,
