@@ -130,7 +130,7 @@ class SemanticEngine:
         self._save_index()
         return {key: value.get("embedding", []) for key, value in updated_index.items() if isinstance(value, dict)}
 
-    def search(self, query: str, entries: List[object], *, limit: int = 5) -> List[SearchHit]:
+    def search(self, query: str, entries: Sequence[object], *, limit: int = 5) -> List[SearchHit]:
         if not query.strip() or not entries:
             return []
         embeddings = self._ensure_embeddings(entries)
@@ -177,7 +177,7 @@ def build_snippet(text: str, query: str, *, max_length: int = 120) -> str:
     return snippet + ("…" if len(snippet) == max_length and len(clean) > max_length else "")
 
 
-def hybrid_search(query: str, entries: List[object], *, limit: int = 5) -> List[SearchHit]:
+def hybrid_search(query: str, entries: Sequence[object], *, limit: int = 5) -> List[SearchHit]:
     """Combine fuzzy and semantic search for richer recall."""
 
     from solace.memory import search_entries  # local import to avoid cycles

@@ -7,6 +7,8 @@ from datetime import datetime
 from pathlib import Path
 from typing import Dict, Iterable, List, Optional
 
+from cryptography.fernet import Fernet
+
 import journal
 import mimic
 import trainer
@@ -29,10 +31,10 @@ class SolaceContext:
     """Runtime configuration shared between controllers."""
 
     config: dict
-    cipher: Optional[object] = None
+    cipher: Optional[Fernet] = None
     password: Optional[str] = None
 
-    def refresh_security(self, *, cipher: Optional[object], password: Optional[str]) -> None:
+    def refresh_security(self, *, cipher: Optional[Fernet], password: Optional[str]) -> None:
         self.cipher = cipher
         self.password = password
 
@@ -86,7 +88,7 @@ class JournalController:
 class TrainerController:
     """Wrapper around trainer helpers for the UI."""
 
-    def teach(self, language: str, content: str, *, category: str = "example") -> trainer.Snippet:
+    def teach(self, language: str, content: str, *, category: str = "example") -> trainer.KnowledgeSnippet:
         snippet = trainer.teach(language.lower(), content, category=category)
         trainer.record_session(language, content, tags=[category])
         return snippet
