@@ -2,10 +2,11 @@
 
 Solace is an offline, local-first journaling and knowledge companion.
 
-Its conversational and coding features run locally: `/chat` provides a transparent
-rule-based response, while `/code bash <topic>` and `/code python <topic>` retrieve
-inspectable recipes without sending diary text to an online service. Solace does not
-claim consciousness; “sentient” here means that it can respond to you offline.
+Its conversational and coding features run locally: `/chat` recalls relevant dated
+entries and automatically routes Bash or Python questions to inspectable offline
+recipes. `/code bash <topic>` and `/code python <topic>` provide explicit recipe
+lookup without sending diary text to an online service. Solace does not claim
+consciousness; “sentient” here means a responsive diary with continuity and recall.
 
 It includes:
 - a **CLI app** for journaling, notes, todos, quotes, memory search, and code/snippet recall;
@@ -30,6 +31,17 @@ python main.py
 ```
 
 Inside Solace, run `/help` to see available commands.
+
+Try the memory-grounded companion after writing a few entries:
+
+```text
+/chat What did I decide about the deployment?
+/chat bash find large files
+/chat python read a JSON file
+```
+
+Only decrypted entries available in the current session can be used as chat context.
+Code suggestions are displayed for review and are never executed by Solace.
 
 ## Repository layout
 
