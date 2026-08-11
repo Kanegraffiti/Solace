@@ -5,7 +5,7 @@ from __future__ import annotations
 import argparse
 import shutil
 import sys
-from collections.abc import Iterable
+from collections.abc import Iterable, Iterator
 from contextlib import contextmanager
 from datetime import datetime
 from pathlib import Path
@@ -106,7 +106,7 @@ PROMPT_DEFAULTS_ONLY = False
 
 
 @contextmanager
-def _defaulting_prompts(enabled: bool) -> Iterable[None]:
+def _defaulting_prompts(enabled: bool) -> Iterator[None]:
     global PROMPT_DEFAULTS_ONLY
     previous = PROMPT_DEFAULTS_ONLY
     PROMPT_DEFAULTS_ONLY = enabled
@@ -428,7 +428,9 @@ def _handle_code(args: str) -> None:
     if language.lower() in {"python", "py"}:
         python_result = python_intel.lookup_python(prompt)
         if not python_result:
-            console.print("[yellow]I do not have a reliable offline Python recipe for that yet. Try /teach python ...[/]")
+            console.print(
+                "[yellow]I do not have a reliable offline Python recipe for that yet. Try /teach python ...[/]"
+            )
             return
         if python_result.confidence < 0.7:
             console.print("[yellow]This is a broad match; review and adapt it before use.[/]")

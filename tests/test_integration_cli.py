@@ -1,7 +1,4 @@
 def test_cli_happy_path(monkeypatch, reload_modules, main_module, tmp_path):
-    journal = reload_modules["journal"]
-    configuration = reload_modules["solace.configuration"]
-
     export_target = tmp_path / "export.md"
 
     prompts = iter(
@@ -31,9 +28,6 @@ def test_cli_happy_path(monkeypatch, reload_modules, main_module, tmp_path):
 
 
 def test_cli_script_commands(reload_modules, main_module, tmp_path):
-    journal = reload_modules["journal"]
-    configuration = reload_modules["solace.configuration"]
-
     export_target = tmp_path / "scripted-export.md"
     argv = []
     for command in [

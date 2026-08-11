@@ -4,10 +4,10 @@ from __future__ import annotations
 
 import json
 import uuid
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, field
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, Iterable, List, Optional
+from typing import Dict, Iterable, List, Optional, cast
 
 from cryptography.fernet import Fernet, InvalidToken
 
@@ -26,9 +26,9 @@ class JournalEntry:
     date: str
     time: str
     content: str
-    tags: List[str] = None
+    tags: List[str] = field(default_factory=list)
     encrypted: bool = False
-    metadata: Dict[str, str] = None
+    metadata: Dict[str, str] = field(default_factory=dict)
 
     def serialise(self) -> Dict[str, object]:
         data = asdict(self)
@@ -80,7 +80,7 @@ def add_entry(
     cipher = _ensure_cipher(cipher, password)
     encrypted = bool(cipher) and CONFIG.get("security", {}).get("encryption_enabled", True)
     payload = content
-    if encrypted:
+    if encrypted and cipher is not None:
         payload = cipher.encrypt(content.encode("utf-8")).decode("utf-8")
 
     entry = JournalEntry(
@@ -110,16 +110,18 @@ def load_entries(
     cipher = _ensure_cipher(cipher, password)
     results: List[JournalEntry] = []
     for item in _load_raw_entries():
+        raw_tags = item.get("tags")
+        raw_metadata = item.get("metadata")
         entry = JournalEntry(
-            identifier=item.get("identifier", str(uuid.uuid4())),
-            entry_type=item.get("entry_type", "diary"),
-            timestamp=item.get("timestamp", datetime.now().isoformat(timespec="seconds")),
-            date=item.get("date", ""),
-            time=item.get("time", ""),
-            content=item.get("content", ""),
-            tags=item.get("tags") or [],
+            identifier=str(item.get("identifier", str(uuid.uuid4()))),
+            entry_type=str(item.get("entry_type", "diary")),
+            timestamp=str(item.get("timestamp", datetime.now().isoformat(timespec="seconds"))),
+            date=str(item.get("date", "")),
+            time=str(item.get("time", "")),
+            content=str(item.get("content", "")),
+            tags=cast(List[str], raw_tags) if isinstance(raw_tags, list) else [],
             encrypted=bool(item.get("encrypted")),
-            metadata=item.get("metadata") or {},
+            metadata=cast(Dict[str, str], raw_metadata) if isinstance(raw_metadata, dict) else {},
         )
         if entry.encrypted and cipher:
             try:

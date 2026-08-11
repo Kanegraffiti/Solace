@@ -11,8 +11,3 @@ ignore = ["E501"]
 quote-style = "double"
 line-ending = "lf"
 indent-style = "space"
-
-
-[tool.pytest.ini_options]
-addopts = "--cov=."
-
