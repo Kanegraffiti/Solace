@@ -32,7 +32,7 @@ from solace.configuration import (
     update_tone,
 )
 from solace.logic import bash_intel, python_intel
-from solace.logic.converse import offline_reply
+from solace.logic.companion import respond as companion_respond
 from solace.semantic import recent_recaps
 from tui.app import SolaceApp
 from tui.controllers import (
@@ -455,15 +455,17 @@ def _handle_mimic(args: str) -> None:
 
 
 def _handle_chat(args: str) -> None:
-    """Offer a transparent, entirely offline conversational response."""
+    """Offer a transparent response grounded in local memory and code knowledge."""
     message = args.strip()
     if not message and PROMPT_DEFAULTS_ONLY:
         console.print("[yellow]Provide a message when scripting /chat.[/]")
         return
     message = message or Prompt.ask("What's on your mind?")
-    response = offline_reply(message, name=PROFILE.get("name", "Friend"))
-    console.print(Panel(response, title="Solace · offline"))
-    VOICE.speak(response)
+    entries = journal_controller.list_entries()
+    response = companion_respond(message, entries, name=PROFILE.get("name", "Friend"))
+    title = "Solace · local memory" if response.memories else "Solace · offline"
+    console.print(Panel(response.text, title=title))
+    VOICE.speak(response.text)
     _log_event("chat", message[:80])
 
 
@@ -574,7 +576,7 @@ def _handle_help(_: str) -> None:
     table.add_row("/teach <language>", "Add a training snippet manually")
     table.add_row("/remember <language> <query>", "Recall training notes")
     table.add_row("/code <language> <topic>", "Show code examples from training data")
-    table.add_row("/chat <message>", "Talk with Solace using its offline responder")
+    table.add_row("/chat <message>", "Talk using local diary recall and Bash/Python knowledge")
     table.add_row("/ask bash <topic>", "Explain Bash concepts like pipes or quoting")
     table.add_row("/debug <error>", "Match common Bash errors to likely fixes")
     table.add_row("/explain [bash] <command>", "Explain Bash command tokens and flags")
