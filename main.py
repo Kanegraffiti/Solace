@@ -20,7 +20,6 @@ from rich.table import Table
 import journal
 import trainer
 from solace import sync as sync_service
-from solace.logic import bash_intel
 from solace.configuration import (
     CONFIG_PATH,
     ensure_storage_dirs,
@@ -32,6 +31,8 @@ from solace.configuration import (
     update_alias,
     update_tone,
 )
+from solace.logic import bash_intel, python_intel
+from solace.logic.converse import offline_reply
 from solace.semantic import recent_recaps
 from tui.app import SolaceApp
 from tui.controllers import (
@@ -424,6 +425,17 @@ def _handle_code(args: str) -> None:
         console.print(Panel("\n\n".join(lines), title="Bash"))
         return
 
+    if language.lower() in {"python", "py"}:
+        python_result = python_intel.lookup_python(prompt)
+        if not python_result:
+            console.print("[yellow]I do not have a reliable offline Python recipe for that yet. Try /teach python ...[/]")
+            return
+        if python_result.confidence < 0.7:
+            console.print("[yellow]This is a broad match; review and adapt it before use.[/]")
+        syntax = Syntax(python_result.code, "python", line_numbers=False, word_wrap=True)
+        console.print(Panel(syntax, title="Python", subtitle=python_result.explanation))
+        return
+
     results = trainer_controller.query(language, prompt)
     if not results:
         console.print("[yellow]No examples found. Teach me with /teach <language> first.[/]")
@@ -438,6 +450,19 @@ def _handle_mimic(args: str) -> None:
     console.print(Panel(response, title="Mimic"))
     VOICE.speak(response)
     _log_event("mimic", args)
+
+
+def _handle_chat(args: str) -> None:
+    """Offer a transparent, entirely offline conversational response."""
+    message = args.strip()
+    if not message and PROMPT_DEFAULTS_ONLY:
+        console.print("[yellow]Provide a message when scripting /chat.[/]")
+        return
+    message = message or Prompt.ask("What's on your mind?")
+    response = offline_reply(message, name=PROFILE.get("name", "Friend"))
+    console.print(Panel(response, title="Solace · offline"))
+    VOICE.speak(response)
+    _log_event("chat", message[:80])
 
 
 def _handle_settings(args: str) -> None:
@@ -547,6 +572,7 @@ def _handle_help(_: str) -> None:
     table.add_row("/teach <language>", "Add a training snippet manually")
     table.add_row("/remember <language> <query>", "Recall training notes")
     table.add_row("/code <language> <topic>", "Show code examples from training data")
+    table.add_row("/chat <message>", "Talk with Solace using its offline responder")
     table.add_row("/ask bash <topic>", "Explain Bash concepts like pipes or quoting")
     table.add_row("/debug <error>", "Match common Bash errors to likely fixes")
     table.add_row("/explain [bash] <command>", "Explain Bash command tokens and flags")
@@ -624,6 +650,7 @@ COMMANDS: Dict[str, Callable[[str], None]] = {
     "teach": _handle_teach,
     "remember": _handle_remember,
     "code": _handle_code,
+    "chat": _handle_chat,
     "ask": _handle_ask,
     "debug": _handle_debug,
     "explain": _handle_explain,

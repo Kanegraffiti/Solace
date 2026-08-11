@@ -15,6 +15,8 @@ Solace commands all start with `/`. The launcher also accepts `--speak` and `--l
 | `/teach <language> [text]` | Store a code/example snippet manually. |
 | `/remember <language> <query>` | Retrieve stored snippets matching the query. |
 | `/code <language> <keyword>` | Display snippets with syntax highlighting. Bash now supports deterministic intent-to-command generation, script templates, placeholders, and safety warnings. |
+| `/code python <topic>` | Generate a built-in, reviewable Python recipe without internet access. |
+| `/chat <message>` | Get a private, deterministic offline response; chat text is not added to the diary. |
 | `/ask bash <topic>` | Explain Bash concepts such as pipes, redirects, quoting, and command substitution. |
 | `/debug <error>` | Match common Bash errors to likely causes and concise fixes. |
 | `/explain [bash] <command>` | Parse and explain Bash command tokens, flags, pipes, and redirects. |

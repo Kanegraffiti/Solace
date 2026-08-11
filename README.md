@@ -2,6 +2,11 @@
 
 Solace is an offline, local-first journaling and knowledge companion.
 
+Its conversational and coding features run locally: `/chat` provides a transparent
+rule-based response, while `/code bash <topic>` and `/code python <topic>` retrieve
+inspectable recipes without sending diary text to an online service. Solace does not
+claim consciousness; “sentient” here means that it can respond to you offline.
+
 It includes:
 - a **CLI app** for journaling, notes, todos, quotes, memory search, and code/snippet recall;
 - a **local web app** (`web/`) for browsing and managing entries/snippets on your machine;
