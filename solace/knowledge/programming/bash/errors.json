@@ -52,5 +52,21 @@
     "patterns": ["cannot execute binary file"],
     "cause": "The file is not a valid executable for this architecture or shell.",
     "fix": "Check file type with 'file <binary>' and ensure platform compatibility."
+  },
+  {
+    "error_message": "storage permission denied",
+    "patterns": ["permission denied storage", "cannot access storage", "storage permission denied"],
+    "requires_any": ["storage"],
+    "priority": 10,
+    "cause": "Termux does not have Android shared-storage permission or its storage links have not been initialized.",
+    "fix": "Run 'termux-setup-storage', approve the Android permission prompt, then verify links with 'ls -la $HOME/storage'."
+  },
+  {
+    "error_message": "external-1 no such file",
+    "patterns": ["storage/external-1", "external-1 no such file or directory"],
+    "requires_any": ["external-1"],
+    "priority": 10,
+    "cause": "The optional external-storage link does not exist on this Android device.",
+    "fix": "Do not assume external-1 exists. Discover available links with 'find $HOME/storage -maxdepth 1 -type l -print'."
   }
 ]

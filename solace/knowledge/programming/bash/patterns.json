@@ -72,5 +72,54 @@
     "command": "find . -type f -size +100M",
     "explanation": "Finds files larger than 100 MB under the current directory.",
     "placeholders": {}
+  },
+  {
+    "intent": "open Termux downloads",
+    "keywords": ["termux", "downloads", "download", "shared storage", "list"],
+    "command": "ls -la \"$HOME/storage/downloads\"",
+    "explanation": "Lists the Android Download directory through Termux's shared-storage link.",
+    "placeholders": {}
+  },
+  {
+    "intent": "create reusable scripts directory",
+    "keywords": ["create", "make", "scripts", "directory", "folder", "reusable"],
+    "command": "mkdir -p \"$HOME/scripts\"",
+    "explanation": "Creates the reusable scripts directory without failing if it already exists.",
+    "placeholders": {}
+  },
+  {
+    "intent": "find reusable shell scripts",
+    "keywords": ["find", "list", "shell", "bash", "scripts", "reusable"],
+    "command": "find \"$HOME/scripts\" -type f -name '*.sh'",
+    "explanation": "Finds Bash scripts saved in the reusable Termux scripts directory.",
+    "placeholders": {}
+  },
+  {
+    "intent": "check script syntax",
+    "keywords": ["check", "validate", "syntax", "bash", "script"],
+    "command": "bash -n <script>.sh",
+    "explanation": "Checks Bash syntax without executing the script.",
+    "placeholders": {"<script>": "Script filename without the .sh suffix."}
+  },
+  {
+    "intent": "debug script execution",
+    "keywords": ["debug", "trace", "bash", "script", "execution"],
+    "command": "bash -x <script>.sh",
+    "explanation": "Runs a Bash script while printing each expanded command for debugging.",
+    "placeholders": {"<script>": "Script filename without the .sh suffix."}
+  },
+  {
+    "intent": "install Termux package",
+    "keywords": ["install", "termux", "pkg", "package", "tool"],
+    "command": "pkg install <package>",
+    "explanation": "Installs a named package using Termux's package manager.",
+    "placeholders": {"<package>": "Termux package name."}
+  },
+  {
+    "intent": "request Termux storage access",
+    "keywords": ["termux", "storage", "permission", "access", "android"],
+    "command": "termux-setup-storage",
+    "explanation": "Requests Android shared-storage permission and creates Termux storage links.",
+    "placeholders": {}
   }
 ]

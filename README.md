@@ -244,4 +244,5 @@ Further documentation is available in [`docs/overview.md`](docs/overview.md),
 [`docs/user_guide.md`](docs/user_guide.md),
 [`docs/cli_reference.md`](docs/cli_reference.md),
 [`docs/settings.md`](docs/settings.md), and
-[`docs/developer_guide.md`](docs/developer_guide.md).
+[`docs/developer_guide.md`](docs/developer_guide.md). Bash capability is measured
+by the enforced [50-case fluency benchmark](docs/bash_fluency_benchmark.md).

@@ -34,5 +34,23 @@
     "aliases": ["difference between grep and find"],
     "summary": "find locates files/paths by metadata, while grep searches text content inside files or streams.",
     "examples": ["find . -name '*.log'", "grep -R 'ERROR' ."]
+  },
+  {
+    "topic": "Termux shared storage",
+    "aliases": ["termux storage", "android storage", "$HOME/storage"],
+    "summary": "Termux exposes approved Android shared-storage locations through links under $HOME/storage.",
+    "examples": ["termux-setup-storage", "ls -la \"$HOME/storage/downloads\""]
+  },
+  {
+    "topic": "strict mode",
+    "aliases": ["set -euo pipefail", "bash strict mode"],
+    "summary": "set -euo pipefail stops on many failures, rejects unset variables, and propagates pipeline failures; scripts still need explicit error handling where failure is expected.",
+    "examples": ["set -euo pipefail", "if ! command; then echo 'failed'; fi"]
+  },
+  {
+    "topic": "exit status",
+    "aliases": ["exit code", "$?", "success failure"],
+    "summary": "Commands return status 0 for success and non-zero for failure; && and || branch on that status.",
+    "examples": ["command && echo success", "command || echo failed"]
   }
 ]

@@ -14,5 +14,8 @@
   "-x": "Extract archive in tar.",
   "-f": "Specify archive filename in tar.",
   "-z": "Use gzip compression in tar.",
-  "+x": "Add executable permission for file owner/group/others depending on umask and mode."
+  "+x": "Add executable permission for file owner/group/others depending on umask and mode.",
+  "-p": "Create parent directories as needed and do not fail when the directory already exists.",
+  "-n": "Check Bash syntax without executing the script.",
+  "-x": "Print commands as Bash executes them for debugging."
 }
