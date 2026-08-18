@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import re
+import shlex
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
@@ -40,6 +41,10 @@ BASH_LANGUAGE_HINTS = {
     "alias",
     "pipe",
     "redirect",
+    "termux",
+    "pkg",
+    "storage",
+    "scripts directory",
 }
 
 
@@ -90,10 +95,20 @@ def classify_safety(command: str) -> List[str]:
             continue
         if pattern == ">":
             if ">" in lowered and ">>" not in lowered:
-                warnings.append(f"[{rule.get('severity','medium')}] {rule.get('message')} Safer: {rule.get('safer_alternative')}")
+                warnings.append(
+                    f"[{rule.get('severity', 'medium')}] {rule.get('message')} "
+                    f"Safer: {rule.get('safer_alternative')}"
+                )
         elif pattern in lowered:
-            warnings.append(f"[{rule.get('severity','medium')}] {rule.get('message')} Safer: {rule.get('safer_alternative')}")
-    if any(path in lowered for path in [" rm -rf /", " rm -rf ~", " /system", " /data "]):
+            warnings.append(
+                f"[{rule.get('severity', 'medium')}] {rule.get('message')} "
+                f"Safer: {rule.get('safer_alternative')}"
+            )
+    normalized = f" {lowered.strip()} "
+    if any(
+        path in normalized
+        for path in [" rm -rf /", " rm -rf ~", " /system", " /data/", " $home/storage", ' "$home/storage']
+    ):
         warnings.append("[high] Command appears to target a critical path. Validate the target path before running.")
     return warnings
 
@@ -166,7 +181,14 @@ def _load_memory() -> List[Dict]:
         return []
 
 
-def remember_mapping(phrase: str, command: str, explanation: str, *, tags: Optional[List[str]] = None, safety: str = "") -> None:
+def remember_mapping(
+    phrase: str,
+    command: str,
+    explanation: str,
+    *,
+    tags: Optional[List[str]] = None,
+    safety: str = "",
+) -> None:
     data = _load_memory()
     normalized = phrase.strip().lower()
     entry = {
@@ -178,7 +200,11 @@ def remember_mapping(phrase: str, command: str, explanation: str, *, tags: Optio
         "safety": safety,
         "updated_at": datetime.now().isoformat(timespec="seconds"),
     }
-    deduped = [item for item in data if item.get("phrase_normalized") != normalized and item.get("command") != entry["command"]]
+    deduped = [
+        item
+        for item in data
+        if item.get("phrase_normalized") != normalized and item.get("command") != entry["command"]
+    ]
     deduped.append(entry)
     BASH_MEMORY_FILE.parent.mkdir(parents=True, exist_ok=True)
     BASH_MEMORY_FILE.write_text(json.dumps(deduped, indent=2), encoding="utf-8")
@@ -229,7 +255,7 @@ def lookup_bash(query: str) -> Optional[BashLookupResult]:
         return memory_match
     script_match = _match_scripts(query)
     pattern_match = _match_patterns(query)
-    if script_match and script_match.confidence >= (pattern_match.confidence if pattern_match else 0):
+    if script_match and script_match.confidence > (pattern_match.confidence if pattern_match else 0):
         return script_match
     return pattern_match
 
@@ -239,11 +265,16 @@ def explain_command(command: str) -> List[str]:
     commands = {item.get("command"): item for item in _load_json("commands.json", [])}
     parts: List[str] = []
 
-    segments = [seg.strip() for seg in command.split("|")]
+    raw_segments = re.split(r"(\|\||&&|\||;)", command)
+    segments = [seg.strip() for seg in raw_segments if seg.strip() and seg not in {"|", "||", "&&", ";"}]
+    operators = [seg for seg in raw_segments if seg in {"|", "||", "&&", ";"}]
     for seg_idx, segment in enumerate(segments, 1):
         if len(segments) > 1:
             parts.append(f"Segment {seg_idx}: {segment}")
-        tokens = segment.split()
+        try:
+            tokens = shlex.split(segment)
+        except ValueError:
+            tokens = segment.split()
         if not tokens:
             continue
         cmd = tokens[0]
@@ -264,6 +295,12 @@ def explain_command(command: str) -> List[str]:
                 parts.append(f"  - {token}: unknown flag")
     if "|" in command:
         parts.append("- |: pipe operator sends output from left command into right command input")
+    if "&&" in operators:
+        parts.append("- &&: run the command on the right only if the command on the left succeeds")
+    if "||" in operators:
+        parts.append("- ||: run the command on the right only if the command on the left fails")
+    if ";" in operators:
+        parts.append("- ;: command separator runs the next command regardless of the previous exit status")
     if ">>" in command:
         parts.append("- >>: append redirect")
     elif ">" in command:
@@ -295,6 +332,9 @@ def debug_bash_error(message: str) -> Optional[str]:
     best = None
     best_score = 0
     for err in _load_json("errors.json", []):
+        required = [str(token).lower() for token in err.get("requires_any", [])]
+        if required and not any(token in message.lower() for token in required):
+            continue
         phrases = [err.get("error_message", "")] + list(err.get("patterns", []))
         score = 0
         for phrase in phrases:
@@ -302,6 +342,8 @@ def debug_bash_error(message: str) -> Optional[str]:
             score = max(score, len(tokens & p_tokens))
             if phrase and phrase.lower() in message.lower():
                 score += 3
+        if score:
+            score += int(err.get("priority", 0))
         if score > best_score:
             best_score = score
             best = err
