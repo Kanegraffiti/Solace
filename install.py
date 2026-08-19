@@ -15,7 +15,7 @@ import shutil
 import subprocess
 import sys
 from pathlib import Path
-from typing import Iterable
+from typing import Iterable, Optional
 
 from solace.configuration import (
     CONFIG_PATH,
@@ -63,7 +63,7 @@ def _launcher_dir(env_name: str) -> Path:
     return Path.home() / ".local" / "bin"
 
 
-def _create_launcher(env_name: str, alias: str) -> Path | None:
+def _create_launcher(env_name: str, alias: str) -> Optional[Path]:
     bin_dir = _launcher_dir(env_name)
     try:
         bin_dir.mkdir(parents=True, exist_ok=True)
@@ -89,7 +89,7 @@ def _create_launcher(env_name: str, alias: str) -> Path | None:
     return launcher
 
 
-def _create_qwen_launcher(env_name: str) -> Path | None:
+def _create_qwen_launcher(env_name: str) -> Optional[Path]:
     if env_name != "termux":
         return None
 
@@ -138,7 +138,7 @@ def _ensure_path(launcher: Path, env_name: str) -> None:
 def _ensure_launchers(alias: str, env_name: str) -> None:
     launcher = _create_launcher(env_name, alias)
     if launcher is None:
-        print("Falling back to manual launch: run `python3 -m solace.launcher`")
+        print("Falling back to manual launch: run `python3 solace/launcher.py`")
     else:
         _ensure_path(launcher, env_name)
         print(f"Solace launcher available: {launcher}")
