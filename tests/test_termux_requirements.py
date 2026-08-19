@@ -27,3 +27,13 @@ def test_termux_core_requirements_skip_optional_native_stacks():
     assert "speechrecognition" not in names
     assert "pocketsphinx" not in names
     assert "uvicorn" not in names
+
+
+def test_termux_installer_sets_up_pip_before_cryptography():
+    installer = (Path(__file__).resolve().parents[1] / "install.sh").read_text(encoding="utf-8")
+
+    pip_install = installer.index("pkg install -y python-pip")
+    pip3_check = installer.index("command -v pip3")
+    crypto_install = installer.index("pkg install -y python-cryptography")
+
+    assert pip_install < pip3_check < crypto_install
