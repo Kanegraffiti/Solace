@@ -1,7 +1,7 @@
 """Local Qwen/llama.cpp integration for Solace.
 
 The integration is intentionally conservative: it never downloads a model or
-builds llama.cpp implicitly.  The Termux setup helper performs those explicit
+builds llama.cpp implicitly. The Termux setup helper performs those explicit
 operations; this module only discovers the configured files and launches them
 without a shell.
 """
@@ -12,7 +12,7 @@ import os
 import subprocess
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Mapping, Sequence
+from typing import Mapping, Optional, Sequence
 
 DEFAULT_LLAMA_CLI = Path.home() / "llama.cpp" / "build" / "bin" / "llama-cli"
 DEFAULT_QWEN_MODEL = (
@@ -34,7 +34,7 @@ class QwenSettings:
     max_tokens: int = 512
 
 
-def _positive_int(value: str | None, default: int) -> int:
+def _positive_int(value: Optional[str], default: int) -> int:
     try:
         parsed = int(value or "")
     except ValueError:
@@ -42,7 +42,7 @@ def _positive_int(value: str | None, default: int) -> int:
     return parsed if parsed > 0 else default
 
 
-def settings_from_environment(env: Mapping[str, str] | None = None) -> QwenSettings:
+def settings_from_environment(env: Optional[Mapping[str, str]] = None) -> QwenSettings:
     """Build settings from environment overrides and safe mobile defaults."""
 
     values = os.environ if env is None else env
@@ -55,7 +55,7 @@ def settings_from_environment(env: Mapping[str, str] | None = None) -> QwenSetti
     )
 
 
-def runtime_status(settings: QwenSettings | None = None) -> tuple[bool, str]:
+def runtime_status(settings: Optional[QwenSettings] = None) -> tuple[bool, str]:
     """Return whether Qwen is ready plus a human-readable status message."""
 
     cfg = settings or settings_from_environment()
@@ -86,10 +86,10 @@ def runtime_status(settings: QwenSettings | None = None) -> tuple[bool, str]:
 
 
 def build_command(
-    prompt: str | None = None,
+    prompt: Optional[str] = None,
     *,
     interactive: bool = False,
-    settings: QwenSettings | None = None,
+    settings: Optional[QwenSettings] = None,
 ) -> list[str]:
     """Return the llama.cpp argv for local Qwen without invoking a shell."""
 
@@ -114,10 +114,10 @@ def build_command(
 
 
 def run_qwen(
-    prompt: str | None = None,
+    prompt: Optional[str] = None,
     *,
     interactive: bool = False,
-    settings: QwenSettings | None = None,
+    settings: Optional[QwenSettings] = None,
 ) -> int:
     """Run Qwen locally and return llama.cpp's exit status."""
 
