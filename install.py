@@ -3,6 +3,11 @@
 The installer detects the host, installs the requested Python dependencies,
 creates a real ``solace`` launcher, initialises local configuration, and can
 optionally prepare the local Qwen backend on Termux.
+
+Termux uses its packaged ``python-cryptography`` build rather than asking pip to
+compile cryptography/maturin on-device. The recommended Termux entry point is
+``bash install.sh`` because it also creates a virtual environment with access to
+those Android-patched system packages.
 """
 
 from __future__ import annotations
@@ -51,6 +56,42 @@ def _pip_install(requirements: Iterable[Path]) -> None:
             continue
         print(f"Installing dependencies from {req} ...")
         subprocess.check_call([python, "-m", "pip", "install", "-r", str(req)])
+
+
+def _install_termux_dependencies(*, include_ml: bool = False) -> None:
+    """Install the Android-safe Termux dependency set.
+
+    cryptography is provided by the Termux package repository because its build
+    includes Android-specific linking fixes. Pip is used only for the lightweight
+    CLI dependencies in requirements-termux.txt.
+    """
+
+    pkg = shutil.which("pkg")
+    if pkg is None:
+        raise SystemExit("Termux package manager `pkg` was not found.")
+
+    print("Installing Termux's Android-patched python-cryptography package ...")
+    subprocess.check_call([pkg, "install", "-y", "python-cryptography"])
+
+    try:
+        from cryptography.fernet import Fernet  # noqa: F401
+    except ImportError as exc:
+        in_venv = sys.prefix != getattr(sys, "base_prefix", sys.prefix)
+        if in_venv:
+            raise SystemExit(
+                "python-cryptography is installed by Termux but this virtual environment "
+                "cannot see system packages. Run `bash install.sh` from the Solace repo; "
+                "it will safely rebuild the disposable .venv with --system-site-packages."
+            ) from exc
+        raise SystemExit(
+            "Termux python-cryptography could not be imported. Run `pkg upgrade` and retry."
+        ) from exc
+
+    requirements = [PROJECT_ROOT / "requirements-termux.txt"]
+    if include_ml:
+        requirements.append(PROJECT_ROOT / "requirements-ml.txt")
+    _pip_install(requirements)
+    print("Skipping optional web/voice native stacks during the Termux core install.")
 
 
 def _launcher_dir(env_name: str) -> Path:
@@ -197,12 +238,15 @@ def main() -> None:
         print("Proceeding with generic installation steps. Some features may require manual setup.")
 
     if not args.skip_deps:
-        requirements = [PROJECT_ROOT / "requirements.txt", PROJECT_ROOT / "requirements-extra.txt"]
-        if "ml" in args.extras:
-            requirements.append(PROJECT_ROOT / "requirements-ml.txt")
+        if env_name == "termux":
+            _install_termux_dependencies(include_ml="ml" in args.extras)
         else:
-            print("Skipping ML extras. Use --extras ml to install semantic and summarisation models.")
-        _pip_install(requirements)
+            requirements = [PROJECT_ROOT / "requirements.txt", PROJECT_ROOT / "requirements-extra.txt"]
+            if "ml" in args.extras:
+                requirements.append(PROJECT_ROOT / "requirements-ml.txt")
+            else:
+                print("Skipping ML extras. Use --extras ml to install semantic and summarisation models.")
+            _pip_install(requirements)
     else:
         print("Skipping dependency installation per --skip-deps")
 
