@@ -17,10 +17,10 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
-import main as core  # noqa: E402
 from rich.panel import Panel  # noqa: E402
 from rich.table import Table  # noqa: E402
 
+import main as core  # noqa: E402
 from solace.local_llm import run_qwen, runtime_status  # noqa: E402
 from solace.user_manual import (  # noqa: E402
     MANUAL_TEXT,
