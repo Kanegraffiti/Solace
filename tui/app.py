@@ -20,7 +20,9 @@ class SolaceApp(App):
         Binding("t", "tag_filter", "Filter tags"),
         Binding("e", "export", "Export"),
         Binding("s", "search", "Search"),
-        Binding("ctrl+,", "settings", "Settings"),
+        # Textual treats commas as separators between multiple bindings. The
+        # printable comma key must therefore be named when used with Ctrl.
+        Binding("ctrl+comma", "settings", "Settings"),
     ]
 
     def __init__(
