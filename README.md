@@ -53,9 +53,26 @@ cd Solace
 bash install.sh
 ```
 
-The shell installer creates a project-local virtual environment and then creates
-real launchers. On Termux, `solace` is written directly to `$PREFIX/bin`, which
-is already on Termux's `PATH`.
+The Termux installer deliberately does **not** ask pip to compile
+`cryptography` from source. Termux ships an Android-patched
+`python-cryptography` package with the platform-specific Rust/linker work
+already handled, so `install.sh` installs that package with `pkg` and creates the
+project `.venv` with `--system-site-packages` so Solace can use it.
+
+The Termux core install uses `requirements-termux.txt`. It installs the journal,
+memory, Rich/Textual CLI, export, and Qwen-facing dependencies without pulling
+in optional web-server and voice stacks that may trigger large or unsupported
+native builds on Android.
+
+The installer also checks whether an existing `.venv` still matches the current
+Termux Python major/minor version. If Termux upgrades Python, or an older Solace
+venv was created without system-package access, rerunning `bash install.sh`
+safely removes and recreates only that disposable project venv. Your journal,
+configuration, Qwen model, llama.cpp checkout, and other files outside `.venv`
+are not removed.
+
+On Termux, `solace` is written directly to `$PREFIX/bin`, which is already on
+Termux's `PATH`.
 
 Start Solace from anywhere:
 
@@ -63,12 +80,33 @@ Start Solace from anywhere:
 solace
 ```
 
+### If a previous Termux install failed during cryptography/maturin
+
+You do not need to manually repair the half-built Python environment. From the
+Solace checkout, rerun:
+
+```bash
+cd ~/Solace
+git pull
+bash install.sh
+```
+
+The installer will install Termux's packaged crypto build and rebuild an
+incompatible `.venv` automatically.
+
 You can also use the Python installer directly:
 
 ```bash
 python3 install.py
 solace
 ```
+
+On Termux, the Python installer uses the same Termux-safe dependency set and the
+packaged `python-cryptography` build. `bash install.sh` remains the recommended
+route because it also manages the isolated `.venv` correctly. If you run
+`install.py` from a virtual environment that cannot see Termux system packages,
+it will stop with instructions to use `bash install.sh` instead of attempting a
+Rust source build.
 
 If you only want to refresh launchers/configuration without reinstalling Python
 dependencies:
@@ -223,7 +261,7 @@ I finished the first deployment today
 | `/code bash <topic>` | Look up a Bash command/template with explanations and safety notes. |
 | `/code python <topic>` | Look up a bundled Python recipe. |
 | `/ask bash <topic>` | Explain a supported Bash concept. |
-| `/debug <error>` | Match a common Bash error to likely causes and fixes. |
+| `/debug <error>` | Match a common Bash error to likely fixes. |
 | `/explain [bash] <command>` | Break down Bash tokens, flags, pipes, and redirects. |
 | `/manual [on\|off\|status]` | Show or configure the startup mini-manual. |
 | `/mimic <text>` | Use the rule-based mimic responder. |
@@ -310,6 +348,7 @@ See [`web/README.md`](web/README.md) for web-specific details.
 | `solace/user_manual.py` | Tiny startup manual and persistent visibility preference. |
 | `scripts/qwen.sh` | Standalone Termux `qwen` wrapper. |
 | `scripts/setup-qwen-termux.sh` | Explicit llama.cpp build + verified Qwen setup. |
+| `requirements-termux.txt` | Termux-safe core pip dependencies; crypto comes from the Termux package repo. |
 | `main.py` | Existing Rich CLI implementation used by the supported launcher. |
 | `journal.py` | Journal persistence, encryption/decryption, and export. |
 | `trainer.py` | User-taught snippet storage and lookup. |
