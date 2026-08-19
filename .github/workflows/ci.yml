@@ -22,6 +22,8 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
           pip install -r requirements-dev.txt
+      - name: Installer shell syntax
+        run: bash -n install.sh scripts/qwen.sh scripts/setup-qwen-termux.sh
       - name: Ruff
         run: >-
           ruff check journal.py install.py solace/configuration.py solace/memory.py

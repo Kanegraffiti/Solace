@@ -1,0 +1,15 @@
+# Termux-safe core dependencies for the Solace CLI.
+#
+# cryptography is intentionally NOT installed from pip on Termux. The installer
+# installs Termux's Android-patched python-cryptography package with `pkg` and
+# creates the project venv with --system-site-packages so it is visible here.
+#
+# Web-server and voice stacks remain optional on Android because some of their
+# transitive native dependencies may require unsupported or expensive source
+# builds on-device.
+networkx
+nltk
+rich
+textual
+termcolor
+fpdf
