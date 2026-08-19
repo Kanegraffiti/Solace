@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, Optional
 
 from solace.configuration import load_config, save_config
 
@@ -21,7 +21,7 @@ Restore it on startup: [bold]/manual on[/bold]
 """
 
 
-def startup_manual_enabled(config: dict[str, Any] | None = None) -> bool:
+def startup_manual_enabled(config: Optional[dict[str, Any]] = None) -> bool:
     """Return whether the mini-manual should appear at interactive startup."""
 
     cfg = load_config() if config is None else config
