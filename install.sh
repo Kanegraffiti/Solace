@@ -8,7 +8,10 @@
 # Termux is handled specially because pip cannot reliably build every native
 # Python dependency on Android. In particular, cryptography uses Rust/maturin
 # and needs Termux-specific linking patches. We therefore install Termux's
-# packaged python-cryptography build and expose it to the project venv.
+# packaged python-cryptography build and expose it to the project venv. Termux
+# ships pip as a separate python-pip package, and python-cryptography's package
+# setup currently expects the pip3 executable to exist, so python-pip must be
+# installed first.
 
 set -euo pipefail
 
@@ -53,8 +56,28 @@ prepare_termux_python() {
         exit 1
     fi
 
+    if ! command -v "$PYTHON_BIN" >/dev/null 2>&1; then
+        printf 'Python was not found. Install it with `pkg install python` and retry.\n' >&2
+        exit 1
+    fi
+
+    # Termux deliberately packages pip separately from Python. This must happen
+    # before python-cryptography because that package's post-install script uses
+    # the pip3 executable. A Python upgrade may remove an old pip executable,
+    # which is exactly the state this installer needs to repair automatically.
+    info "Ensuring Termux's standalone python-pip package is installed"
+    pkg install -y python-pip
+
+    if ! command -v pip3 >/dev/null 2>&1 || ! "$PYTHON_BIN" -m pip --version >/dev/null 2>&1; then
+        printf 'Termux python-pip installed but pip3 is still unavailable. Run `pkg reinstall python-pip` and retry.\n' >&2
+        exit 1
+    fi
+
     info "Installing Termux's Android-patched python-cryptography package"
-    pkg install -y python-cryptography
+    if ! pkg install -y python-cryptography; then
+        warn "python-cryptography did not configure cleanly; retrying after python-pip setup"
+        pkg install -y python-cryptography
+    fi
 
     if ! "$PYTHON_BIN" -c 'from cryptography.fernet import Fernet' >/dev/null 2>&1; then
         printf 'Termux python-cryptography installed but cannot be imported. Run `pkg upgrade` and retry.\n' >&2
