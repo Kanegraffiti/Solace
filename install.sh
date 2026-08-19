@@ -50,6 +50,23 @@ venv_needs_rebuild() {
     return 1
 }
 
+termux_pkg_install() {
+    local package="$1"
+
+    # Termux's pkg wrapper can fan out across many mirrors when the configured
+    # mirror is considered stale or unavailable. That mirror sweep is wasteful
+    # on a constrained phone and can trigger Android process kills. The pkg
+    # wrapper officially supports TERMUX_PKG_NO_MIRROR_SELECT to use the
+    # currently configured repository directly instead.
+    if TERMUX_PKG_NO_MIRROR_SELECT=1 pkg install -y "$package"; then
+        return 0
+    fi
+
+    printf '\nTermux could not install %s from the configured repository.\n' "$package" >&2
+    printf 'Run `termux-change-repo`, choose a working main repository, then rerun `bash install.sh`.\n' >&2
+    return 1
+}
+
 prepare_termux_python() {
     if ! command -v pkg >/dev/null 2>&1; then
         printf 'Termux package manager `pkg` was not found.\n' >&2
@@ -66,7 +83,7 @@ prepare_termux_python() {
     # the pip3 executable. A Python upgrade may remove an old pip executable,
     # which is exactly the state this installer needs to repair automatically.
     info "Ensuring Termux's standalone python-pip package is installed"
-    pkg install -y python-pip
+    termux_pkg_install python-pip
 
     if ! command -v pip3 >/dev/null 2>&1 || ! "$PYTHON_BIN" -m pip --version >/dev/null 2>&1; then
         printf 'Termux python-pip installed but pip3 is still unavailable. Run `pkg reinstall python-pip` and retry.\n' >&2
@@ -74,9 +91,9 @@ prepare_termux_python() {
     fi
 
     info "Installing Termux's Android-patched python-cryptography package"
-    if ! pkg install -y python-cryptography; then
+    if ! termux_pkg_install python-cryptography; then
         warn "python-cryptography did not configure cleanly; retrying after python-pip setup"
-        pkg install -y python-cryptography
+        termux_pkg_install python-cryptography
     fi
 
     if ! "$PYTHON_BIN" -c 'from cryptography.fernet import Fernet' >/dev/null 2>&1; then
