@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import sys
 from pathlib import Path
-from typing import Sequence
+from typing import Optional, Sequence
 
 # When this file is launched directly from an installed wrapper, add the repo
 # root so the historical root ``main.py`` remains importable.
@@ -116,7 +116,7 @@ def _is_scripted(argv: Sequence[str]) -> bool:
     return any(arg in scripted_flags or arg.startswith("--command=") for arg in argv)
 
 
-def main(argv: list[str] | None = None) -> None:
+def main(argv: Optional[list[str]] = None) -> None:
     args = list(sys.argv[1:] if argv is None else argv)
     _register_extensions()
     if not _is_scripted(args) and startup_manual_enabled():
