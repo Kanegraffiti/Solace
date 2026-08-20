@@ -9,6 +9,7 @@
 # builds on-device.
 networkx
 nltk
+openpyxl
 rich
 textual
 termcolor

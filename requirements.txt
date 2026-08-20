@@ -3,6 +3,7 @@ cryptography
 fastapi
 networkx
 nltk
+openpyxl
 pyttsx3
 rich
 uvicorn[standard]

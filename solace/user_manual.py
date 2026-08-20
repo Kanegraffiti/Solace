@@ -11,10 +11,13 @@ MANUAL_TEXT = """[bold]The tiny Solace manual[/bold]
 • Plain text → save a diary entry.
 • /chat <message> → talk with Solace's local memory/knowledge companion.
 • /qwen <prompt> → ask the local Qwen coder model; /qwen alone opens Qwen chat.
+• /excel <question> → formulas, PivotTables, charts and workbook tools.
+• /file <request> → safely find, copy, move, rename, trash and restore files.
 • /search <query> → find journal memories.
 • /code bash <topic> → get a deterministic Bash recipe.
 • /help → see every Solace command.
 
+File-changing actions ask first. /file delete moves items to Solace Trash, not rm.
 Hide this panel on future starts: [bold]/manual off[/bold]
 Show it whenever you want: [bold]/manual[/bold]
 Restore it on startup: [bold]/manual on[/bold]

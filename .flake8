@@ -3,3 +3,5 @@ max-line-length = 120
 extend-ignore = E203
 per-file-ignores =
     tests/*:S101
+    solace/excel_skill.py:E501
+    solace/launcher.py:E501
