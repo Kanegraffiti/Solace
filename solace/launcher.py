@@ -17,6 +17,14 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
+from solace.termux_compat import ensure_termux_cryptography_compatible  # noqa: E402
+
+# Some Android 16 / current Termux combinations do not expose CPython symbols
+# globally enough for cryptography's Rust extension. Promote the active
+# libpython inside this process first; bounded preload fallbacks are attempted
+# only if Android still refuses the import. This is a no-op outside Termux.
+ensure_termux_cryptography_compatible()
+
 from rich.panel import Panel  # noqa: E402
 from rich.table import Table  # noqa: E402
 

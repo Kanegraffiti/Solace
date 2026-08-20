@@ -7,7 +7,9 @@ optionally prepare the local Qwen backend on Termux.
 Termux uses its packaged ``python-cryptography`` build rather than asking pip to
 compile cryptography/maturin on-device. The recommended Termux entry point is
 ``bash install.sh`` because it also creates a virtual environment with access to
-those Android-patched system packages.
+those Android-patched system packages. On affected Android/Termux runtimes,
+Solace makes the active libpython's CPython symbols globally visible before
+cryptography is imported and uses a bounded preload fallback only if needed.
 """
 
 from __future__ import annotations
@@ -22,7 +24,11 @@ import sys
 from pathlib import Path
 from typing import Iterable, Optional
 
-from solace.configuration import (
+from solace.termux_compat import ensure_termux_cryptography_compatible
+
+ensure_termux_cryptography_compatible()
+
+from solace.configuration import (  # noqa: E402
     CONFIG_PATH,
     DEFAULT_ALIAS_NAME,
     DEFAULT_CONFIG,
@@ -70,9 +76,15 @@ def _install_termux_dependencies(*, include_ml: bool = False) -> None:
     if pkg is None:
         raise SystemExit("Termux package manager `pkg` was not found.")
 
-    print("Installing Termux's Android-patched python-cryptography package ...")
-    subprocess.check_call([pkg, "install", "-y", "python-cryptography"])
+    pkg_env = os.environ.copy()
+    pkg_env["TERMUX_PKG_NO_MIRROR_SELECT"] = "1"
 
+    print("Ensuring Termux's standalone python-pip package is installed ...")
+    subprocess.check_call([pkg, "install", "-y", "python-pip"], env=pkg_env)
+    print("Installing Termux's Android-patched python-cryptography package ...")
+    subprocess.check_call([pkg, "install", "-y", "python-cryptography"], env=pkg_env)
+
+    ensure_termux_cryptography_compatible()
     try:
         from cryptography.fernet import Fernet  # noqa: F401
     except ImportError as exc:
@@ -84,7 +96,9 @@ def _install_termux_dependencies(*, include_ml: bool = False) -> None:
                 "it will safely rebuild the disposable .venv with --system-site-packages."
             ) from exc
         raise SystemExit(
-            "Termux python-cryptography could not be imported. Run `pkg upgrade` and retry."
+            "Termux python-cryptography could not be imported after Solace's Android loader "
+            "compatibility steps. The preceding exception is the useful diagnostic; report it "
+            "with `termux-info`."
         ) from exc
 
     requirements = [PROJECT_ROOT / "requirements-termux.txt"]
