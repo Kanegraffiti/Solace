@@ -55,9 +55,24 @@ bash install.sh
 
 The Termux installer deliberately does **not** ask pip to compile
 `cryptography` from source. Termux ships an Android-patched
-`python-cryptography` package with the platform-specific Rust/linker work
-already handled, so `install.sh` installs that package with `pkg` and creates the
-project `.venv` with `--system-site-packages` so Solace can use it.
+`python-cryptography` package, so `install.sh` installs that package with `pkg`
+and creates the project `.venv` with `--system-site-packages` so Solace can use
+it.
+
+Some current Android 16 / Termux / Python combinations can still fail while
+loading cryptography's Rust extension even when `python-cryptography` itself is
+fully up to date. Solace therefore performs a runtime compatibility check before
+cryptography is imported. It first loads the active interpreter's `libpython`
+with Python's platform-correct `RTLD_GLOBAL`, which exposes CPython symbols
+without changing Termux's normal `LD_PRELOAD`. Only if Android still refuses
+the import does Solace try bounded file-based re-exec fallbacks, ending with the
+libpython-only preload arrangement documented in Termux's current cryptography
+loader report. The active `libpython` path is discovered dynamically rather than
+hard-coded to one Python version.
+
+A full `pkg upgrade` is **not** the recovery step for that loader issue. If the
+compatibility check still fails, the installer prints the actual traceback so
+the failing symbol/library can be diagnosed directly.
 
 The Termux core install uses `requirements-termux.txt`. It installs the journal,
 memory, Rich/Textual CLI, export, and Qwen-facing dependencies without pulling
@@ -91,8 +106,9 @@ git pull
 bash install.sh
 ```
 
-The installer will install Termux's packaged crypto build and rebuild an
-incompatible `.venv` automatically.
+The installer will install Termux's packaged crypto build, apply the runtime
+loader compatibility check when needed, and rebuild an incompatible `.venv`
+automatically.
 
 You can also use the Python installer directly:
 
@@ -345,6 +361,7 @@ See [`web/README.md`](web/README.md) for web-specific details.
 | --- | --- |
 | `solace/launcher.py` | Supported launcher; startup manual and local-Qwen command registration. |
 | `solace/local_llm.py` | Safe llama.cpp/Qwen discovery and process invocation. |
+| `solace/termux_compat.py` | Android/Termux native-loader compatibility for cryptography. |
 | `solace/user_manual.py` | Tiny startup manual and persistent visibility preference. |
 | `scripts/qwen.sh` | Standalone Termux `qwen` wrapper. |
 | `scripts/setup-qwen-termux.sh` | Explicit llama.cpp build + verified Qwen setup. |

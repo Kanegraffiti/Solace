@@ -7,11 +7,11 @@
 #
 # Termux is handled specially because pip cannot reliably build every native
 # Python dependency on Android. In particular, cryptography uses Rust/maturin
-# and needs Termux-specific linking patches. We therefore install Termux's
-# packaged python-cryptography build and expose it to the project venv. Termux
-# ships pip as a separate python-pip package, and python-cryptography's package
-# setup currently expects the pip3 executable to exist, so python-pip must be
-# installed first.
+# and needs Termux-specific linking. We therefore install Termux's packaged
+# python-cryptography build and expose it to the project venv. If an earlier
+# package install happened before pip3 was healthy, the package's post-install
+# dependency step may have been skipped; Solace detects the missing CFFI backend
+# and repairs that half-configured state before checking Android loader quirks.
 
 set -euo pipefail
 
@@ -53,11 +53,6 @@ venv_needs_rebuild() {
 termux_pkg_install() {
     local package="$1"
 
-    # Termux's pkg wrapper can fan out across many mirrors when the configured
-    # mirror is considered stale or unavailable. That mirror sweep is wasteful
-    # on a constrained phone and can trigger Android process kills. The pkg
-    # wrapper officially supports TERMUX_PKG_NO_MIRROR_SELECT to use the
-    # currently configured repository directly instead.
     if TERMUX_PKG_NO_MIRROR_SELECT=1 pkg install -y "$package"; then
         return 0
     fi
@@ -65,6 +60,28 @@ termux_pkg_install() {
     printf '\nTermux could not install %s from the configured repository.\n' "$package" >&2
     printf 'Run `termux-change-repo`, choose a working main repository, then rerun `bash install.sh`.\n' >&2
     return 1
+}
+
+termux_pkg_reinstall() {
+    local package="$1"
+
+    if TERMUX_PKG_NO_MIRROR_SELECT=1 pkg reinstall -y "$package"; then
+        return 0
+    fi
+
+    printf '\nTermux could not reinstall %s from the configured repository.\n' "$package" >&2
+    printf 'Run `termux-change-repo`, choose a working main repository, then rerun `bash install.sh`.\n' >&2
+    return 1
+}
+
+termux_cffi_ready() {
+    local python_bin="$1"
+    "$python_bin" -c 'import _cffi_backend' >/dev/null 2>&1
+}
+
+termux_crypto_check() {
+    local python_bin="$1"
+    "$python_bin" "$PROJECT_DIR/solace/termux_compat.py"
 }
 
 prepare_termux_python() {
@@ -78,10 +95,8 @@ prepare_termux_python() {
         exit 1
     fi
 
-    # Termux deliberately packages pip separately from Python. This must happen
-    # before python-cryptography because that package's post-install script uses
-    # the pip3 executable. A Python upgrade may remove an old pip executable,
-    # which is exactly the state this installer needs to repair automatically.
+    # python-cryptography's Termux package installs its target Python
+    # dependencies during package configuration, so pip3 must exist first.
     info "Ensuring Termux's standalone python-pip package is installed"
     termux_pkg_install python-pip
 
@@ -93,11 +108,31 @@ prepare_termux_python() {
     info "Installing Termux's Android-patched python-cryptography package"
     if ! termux_pkg_install python-cryptography; then
         warn "python-cryptography did not configure cleanly; retrying after python-pip setup"
-        termux_pkg_install python-cryptography
+        termux_pkg_reinstall python-cryptography
     fi
 
-    if ! "$PYTHON_BIN" -c 'from cryptography.fernet import Fernet' >/dev/null 2>&1; then
-        printf 'Termux python-cryptography installed but cannot be imported. Run `pkg upgrade` and retry.\n' >&2
+    # A previous python-cryptography install may have been marked installed even
+    # though its post-install pip step failed while pip3 was absent. In that
+    # state cryptography exists but importing it fails with missing
+    # `_cffi_backend`. Reinstalling the Termux package after pip is healthy
+    # reruns its own declared target-dependency setup without compiling an
+    # unrelated replacement cryptography wheel.
+    if ! termux_cffi_ready "$PYTHON_BIN"; then
+        warn "Termux cryptography is missing its CFFI runtime dependency; repairing package setup"
+        termux_pkg_reinstall python-cryptography
+    fi
+
+    if ! termux_cffi_ready "$PYTHON_BIN"; then
+        printf '\nTermux reconfigured python-cryptography but `_cffi_backend` is still unavailable.\n' >&2
+        printf 'Please report the reinstall output and `termux-info`; do not run another full `pkg upgrade`.\n' >&2
+        exit 1
+    fi
+
+    info "Checking Termux cryptography runtime compatibility"
+    if ! termux_crypto_check "$PYTHON_BIN"; then
+        printf '\nTermux python-cryptography is installed but the native module still cannot load.\n' >&2
+        printf 'The traceback above is the useful diagnostic; a full `pkg upgrade` is not the recovery step.\n' >&2
+        printf 'Please report that traceback together with `termux-info`.\n' >&2
         exit 1
     fi
 }
@@ -129,15 +164,21 @@ install_python_dependencies() {
         info "Installing Termux-safe Solace CLI dependencies"
         "$VENV_DIR/bin/python" -m pip install -r "$PROJECT_DIR/requirements-termux.txt"
 
-        # Fail early with a useful message instead of discovering a broken
-        # native dependency only when Solace starts.
+        if ! termux_cffi_ready "$VENV_DIR/bin/python"; then
+            printf 'The Solace virtual environment cannot see Termux CFFI system packages.\n' >&2
+            printf 'Delete only `%s` and rerun `bash install.sh`; user data is stored outside the venv.\n' "$VENV_DIR" >&2
+            exit 1
+        fi
+
+        info "Checking native cryptography from the Solace virtual environment"
+        termux_crypto_check "$VENV_DIR/bin/python"
+
         "$VENV_DIR/bin/python" - <<'PY'
-from cryptography.fernet import Fernet
 import networkx
 import nltk
 import rich
 import textual
-print("Termux core dependency check passed.")
+print("Termux core Python dependency check passed.")
 PY
         info "Skipping optional web/voice native stacks on Termux during the core install"
         return

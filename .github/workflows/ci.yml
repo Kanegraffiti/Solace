@@ -27,15 +27,17 @@ jobs:
       - name: Ruff
         run: >-
           ruff check journal.py install.py solace/configuration.py solace/memory.py
-          solace/launcher.py solace/local_llm.py solace/user_manual.py tests
+          solace/launcher.py solace/local_llm.py solace/termux_compat.py solace/user_manual.py tests
           tui/controllers.py main.py
       - name: Flake8
         run: >-
           flake8 journal.py install.py solace/configuration.py solace/memory.py
-          solace/launcher.py solace/local_llm.py solace/user_manual.py tests
+          solace/launcher.py solace/local_llm.py solace/termux_compat.py solace/user_manual.py tests
           tui/controllers.py main.py
       - name: Mypy
-        run: mypy journal.py solace/configuration.py solace/memory.py solace/local_llm.py tui/controllers.py main.py
+        run: >-
+          mypy journal.py solace/configuration.py solace/memory.py solace/local_llm.py
+          solace/termux_compat.py tui/controllers.py main.py
       - name: Tests
         run: pytest --cov=. --cov-report=xml --cov-report=term
       - name: Upload coverage report

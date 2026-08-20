@@ -39,8 +39,35 @@ def test_termux_installer_sets_up_pip_before_cryptography():
     assert pip_install < pip3_check < crypto_install
 
 
-def test_termux_installer_disables_automatic_mirror_sweep():
+def test_termux_installer_repairs_missing_cffi_after_failed_postinst():
     installer = (Path(__file__).resolve().parents[1] / "install.sh").read_text(encoding="utf-8")
 
-    assert "TERMUX_PKG_NO_MIRROR_SELECT=1 pkg install -y" in installer
+    cffi_probe = installer.index("termux_cffi_ready")
+    reinstall = installer.index("termux_pkg_reinstall python-cryptography")
+    crypto_check = installer.index('info "Checking Termux cryptography runtime compatibility"')
+
+    assert "import _cffi_backend" in installer
+    assert "pkg reinstall -y" in installer
+    assert cffi_probe < reinstall < crypto_check
+
+
+def test_termux_installer_avoids_full_mirror_sweep():
+    installer = (Path(__file__).resolve().parents[1] / "install.sh").read_text(encoding="utf-8")
+
+    assert "TERMUX_PKG_NO_MIRROR_SELECT=1 pkg install" in installer
+    assert "TERMUX_PKG_NO_MIRROR_SELECT=1 pkg reinstall" in installer
     assert "termux-change-repo" in installer
+
+
+def test_termux_installer_uses_file_based_crypto_compatibility_check():
+    root = Path(__file__).resolve().parents[1]
+    installer = (root / "install.sh").read_text(encoding="utf-8")
+    compatibility = (root / "solace" / "termux_compat.py").read_text(encoding="utf-8")
+
+    assert '"$PROJECT_DIR/solace/termux_compat.py"' in installer
+    assert "termux_crypto_check" in installer
+    assert "RTLD_GLOBAL" in compatibility
+    assert "ctypes.CDLL" in compatibility
+    assert '"libpython-only"' in compatibility
+    assert "Run `pkg upgrade` and retry" not in installer
+    assert "termux_python_exec" not in installer
