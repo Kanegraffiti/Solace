@@ -1,6 +1,8 @@
+from __future__ import annotations
+
 import json
 from pathlib import Path
-from typing import List, Dict, Iterable
+from typing import Dict, Iterable, List, Optional
 
 from ..utils.datetime import ts_to_filename
 from ..utils.encryption import encrypt_bytes, decrypt_bytes
@@ -9,7 +11,13 @@ from ..utils.keys import get_key
 BASE_DIR = Path(__file__).resolve().parents[2] / 'storage' / 'notes'
 
 
-def add_note(title: str, content: str, timestamp: str, tags: Iterable[str] | None = None, private: bool = False) -> Path:
+def add_note(
+    title: str,
+    content: str,
+    timestamp: str,
+    tags: Optional[Iterable[str]] = None,
+    private: bool = False,
+) -> Path:
     """Save a markdown note and return its path."""
     BASE_DIR.mkdir(parents=True, exist_ok=True)
     tags = list(tags or [])
