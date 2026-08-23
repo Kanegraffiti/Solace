@@ -86,4 +86,6 @@ All settings are saved to `~/.solaceconfig.json`. The storage directory is creat
 
 ## Leaving Solace
 
-Type `/exit`, `exit`, `quit` or use `Ctrl+C`/`Ctrl+D` to close the program. A simple session log is kept inside `~/.solace/session.log`.
+Type `/end` to close Solace. The older `/exit`, `end`, `exit`, and `quit` forms
+remain available, as do `Ctrl+C`/`Ctrl+D`. In the Textual interface, use
+`Ctrl+Q`. A simple session log is kept inside `~/.solace/session.log`.

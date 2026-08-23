@@ -16,6 +16,7 @@ class SolaceApp(App):
 
     CSS_PATH = None
     BINDINGS = [
+        Binding("ctrl+q", "quit", "Exit Solace"),
         Binding("ctrl+n", "new_diary", "New diary entry"),
         Binding("t", "tag_filter", "Filter tags"),
         Binding("e", "export", "Export"),

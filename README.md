@@ -384,7 +384,7 @@ I finished the first deployment today
 | `/listen` | Capture speech when STT is enabled. |
 | `/settings` | Manage password, voice, tone, alias, backup/restore and related settings. |
 | `/help` | Show the full in-app command list. |
-| `/exit`, `exit`, `quit` | Leave Solace. |
+| `/end`, `/exit`, `end`, `exit`, `quit` | Leave Solace. In the TUI, use `Ctrl+Q`. |
 
 Colon shortcuts (`:diary`, `:notes`, `:todo`, and `:quote`) remain supported.
 

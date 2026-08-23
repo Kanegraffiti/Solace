@@ -592,7 +592,7 @@ def _handle_help(_: str) -> None:
     table.add_row("/listen", "Capture voice input when STT is enabled")
     table.add_row("/settings", "Manage Solace configuration")
     table.add_row("/help", "Show this command list")
-    table.add_row("/exit", "Save and leave")
+    table.add_row("/end", "Close Solace safely")
     console.print(table)
 
 
@@ -684,7 +684,7 @@ def _process_command(raw: str, *, show_exit_message: bool = True) -> bool:
     text = raw.strip()
     if not text:
         return True
-    if text.lower() in {"exit", "quit"}:
+    if text.lower() in {"/end", "/exit", "end", "exit", "quit"}:
         if show_exit_message:
             console.print("[green]Take care.[/]")
         return False
