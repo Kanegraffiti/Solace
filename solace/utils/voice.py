@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import platform
 import importlib
 
@@ -129,5 +131,4 @@ def recognize_speech(duration: int = 5) -> str | None:
     except Exception as e:  # noqa: BLE001
         print(f"Speech recognition error: {e}")
         return None
-
 
