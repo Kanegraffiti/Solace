@@ -24,6 +24,6 @@ Solace commands all start with `/`. The launcher also accepts `--speak` and `--l
 | `/listen` | Capture speech input when STT is enabled. |
 | `/settings [subcommand]` | Configure password, voice, tone, alias, backups and fallback mode. |
 | `/help` | Show the help table inside Solace. |
-| `/exit` | Quit the program. |
+| `/end` | Close Solace safely (`/exit`, `end`, `exit`, and `quit` remain aliases). |
 
 Colon shortcuts like `:diary Something happened today` also record entries without the slash prefix.

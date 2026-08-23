@@ -62,7 +62,7 @@ HELP_TEXT = """Available commands:
 /install voice- install voice packages
 /mode settings- configure preferences
 /help         - show this help
-/exit         - exit program
+/end          - close Solace
 """
 
 
@@ -512,6 +512,7 @@ def cmd_mode(args: str) -> None:
 
 COMMAND_MAP: Dict[str, CommandFunc] = {
     "help": cmd_help,
+    "end": cmd_exit,
     "exit": cmd_exit,
     "diary": cmd_diary,
     "notes": cmd_notes,
@@ -556,4 +557,3 @@ def dispatch(line: str) -> Optional[str | bool]:
     if result == "EXIT":
         return "EXIT"
     return result or True
-
