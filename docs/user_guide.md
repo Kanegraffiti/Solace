@@ -41,6 +41,20 @@ Snippets live in `~/.solace/training/` along with a JSON index and timestamped s
 
 `/mimic <text>` runs the rule-based responder. Solace compares your text against triggers stored in `~/.solace/conversation/guide.json` and replies with the closest match, falling back to a simple apology or encouragement depending on the configured fallback mode.
 
+## Offline conversation
+
+`/chat <message>` uses an inspectable, offline dialogue manager. It recognises
+greetings, gratitude, emotional pressure, frustration, accomplishments,
+decisions, and planning requests. During the current Solace process it keeps a
+small session-only record of the active topic, so brief replies such as “yes”,
+“maybe”, or “I don't know” can receive a relevant follow-up. This session state
+is not written to the journal automatically and disappears when Solace exits.
+
+Solace does not invent personal details or claim access to live information.
+When a prompt needs current weather, news, prices, traffic, or scores, it says
+that offline mode cannot verify the answer. Journal memories are included only
+when the normal local relevance and decryption checks succeed.
+
 ## Voice helpers
 
 If the optional voice dependencies are installed you can toggle text-to-speech and speech recognition under `/settings voice`. Once enabled:
