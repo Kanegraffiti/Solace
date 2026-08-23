@@ -12,7 +12,7 @@ from typing import Sequence
 
 from journal import JournalEntry
 from solace.logic import bash_intel, python_intel
-from solace.logic.converse import offline_reply
+from solace.logic.converse import ConversationState, offline_reply
 from solace.memory import search_entries
 
 
@@ -51,7 +51,14 @@ def _memory_context(memories: Sequence[JournalEntry]) -> str:
     return "\n".join(lines)
 
 
-def respond(prompt: str, entries: Sequence[JournalEntry], *, name: str = "Friend") -> CompanionResponse:
+def respond(
+    prompt: str,
+    entries: Sequence[JournalEntry],
+    *,
+    name: str = "Friend",
+    state: ConversationState | None = None,
+    tone: str = "friendly",
+) -> CompanionResponse:
     """Answer *prompt* using local code knowledge and relevant diary memory.
 
     Programming questions are routed to deterministic, inspectable knowledge
@@ -81,7 +88,7 @@ def respond(prompt: str, entries: Sequence[JournalEntry], *, name: str = "Friend
                 sections.append(context)
             return CompanionResponse("\n\n".join(sections), memories, "python")
 
-    reply = offline_reply(prompt, name=name)
+    reply = offline_reply(prompt, name=name, state=state, tone=tone)
     if context:
         reply = f"{reply}\n\n{context}\nDoes that still reflect where you are now?"
     return CompanionResponse(reply, memories)

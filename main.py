@@ -33,6 +33,7 @@ from solace.configuration import (
 )
 from solace.logic import bash_intel, python_intel
 from solace.logic.companion import respond as companion_respond
+from solace.logic.converse import ConversationState
 from solace.semantic import recent_recaps
 from tui.app import SolaceApp
 from tui.controllers import (
@@ -53,6 +54,7 @@ CONTEXT = SolaceContext(CONFIG)
 journal_controller = JournalController(CONTEXT)
 trainer_controller = TrainerController()
 mimic_controller = MimicController()
+CHAT_STATE = ConversationState()
 settings_controller = SettingsController(CONTEXT)
 
 
@@ -462,7 +464,13 @@ def _handle_chat(args: str) -> None:
         return
     message = message or Prompt.ask("What's on your mind?")
     entries = journal_controller.list_entries()
-    response = companion_respond(message, entries, name=PROFILE.get("name", "Friend"))
+    response = companion_respond(
+        message,
+        entries,
+        name=PROFILE.get("name", "Friend"),
+        state=CHAT_STATE,
+        tone=CONFIG.get("tone", "friendly"),
+    )
     title = "Solace · local memory" if response.memories else "Solace · offline"
     console.print(Panel(response.text, title=title))
     VOICE.speak(response.text)
