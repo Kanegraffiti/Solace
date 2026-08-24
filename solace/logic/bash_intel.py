@@ -3,6 +3,8 @@ from __future__ import annotations
 import json
 import re
 import shlex
+import shutil
+import subprocess
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
@@ -57,6 +59,71 @@ class BashLookupResult:
     safety: List[str]
     confidence: float
     source: str
+
+
+@dataclass
+class BashCheckResult:
+    source: str
+    syntax_valid: bool
+    diagnostics: str
+    safety: List[str]
+    explanation: List[str]
+
+
+def _looks_like_script_path(value: str) -> bool:
+    expanded = value.strip().strip("\"'")
+    return expanded.endswith((".sh", ".bash")) or expanded.startswith(("./", "../", "~/", "/"))
+
+
+def check_bash(value: str, *, timeout: float = 5.0, max_bytes: int = 1_000_000) -> BashCheckResult:
+    """Syntax-check a command or script path without executing its contents."""
+
+    requested = value.strip()
+    if not requested:
+        raise ValueError("Provide a Bash command or script path to check.")
+
+    candidate = Path(requested.strip("\"'")).expanduser()
+    if candidate.is_file():
+        if candidate.stat().st_size > max_bytes:
+            raise ValueError(f"Script is larger than the {max_bytes:,}-byte validation limit.")
+        try:
+            script = candidate.read_text(encoding="utf-8")
+        except UnicodeDecodeError as exc:
+            raise ValueError("Script must be UTF-8 text.") from exc
+        source = str(candidate)
+    elif _looks_like_script_path(requested):
+        raise FileNotFoundError(f"Script not found: {candidate}")
+    else:
+        script = requested
+        source = "command input"
+
+    bash = shutil.which("bash")
+    if bash is None:
+        raise RuntimeError("Bash is not installed or is not available on PATH.")
+
+    try:
+        completed = subprocess.run(
+            [bash, "-n"],
+            input=script,
+            text=True,
+            capture_output=True,
+            check=False,
+            timeout=timeout,
+        )
+    except subprocess.TimeoutExpired as exc:
+        raise RuntimeError("Bash syntax validation timed out.") from exc
+
+    diagnostics = completed.stderr.strip()
+    if completed.returncode == 0:
+        diagnostics = "No Bash syntax errors found."
+
+    return BashCheckResult(
+        source=source,
+        syntax_valid=completed.returncode == 0,
+        diagnostics=diagnostics,
+        safety=classify_safety(script),
+        explanation=explain_command(script),
+    )
 
 
 def _load_json(name: str, default):

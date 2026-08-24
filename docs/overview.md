@@ -7,7 +7,7 @@ The application focuses on three areas:
 - **Journaling** – capture dated diary, note, todo and quote entries that are stored as JSON. Entries can be encrypted when Solace is configured with a password.
 - **Memory search** – query past writing with `/search`, which performs fuzzy matching across text and tags to resurface relevant memories.
 - **Teaching snippets** – curate language-tagged examples using `/teach`, then revisit them through `/remember` or `/code` when you need a refresher.
-- **Bash intelligence** – use `/code bash ...`, `/ask bash ...`, `/debug ...`, and `/explain ...` for deterministic local command lookup, command breakdowns, error assistance, and safety warnings.
+- **Bash intelligence** – use `/code bash ...`, `/ask bash ...`, `/debug ...`, `/explain ...`, and `/bash check ...` for deterministic local command lookup, non-executing syntax validation, command breakdowns, error assistance, and safety warnings.
 
 Data is intentionally simple so it can be inspected or backed up manually. Journal entries are appended to `entries.json`, training snippets sit under `~/.solace/training`, and the mimic guide is a small JSON file that you can edit to customise responses.
 
