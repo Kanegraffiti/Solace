@@ -588,6 +588,7 @@ def _handle_help(_: str) -> None:
     table.add_row("/ask bash <topic>", "Explain Bash concepts like pipes or quoting")
     table.add_row("/debug <error>", "Match common Bash errors to likely fixes")
     table.add_row("/explain [bash] <command>", "Explain Bash command tokens and flags")
+    table.add_row("/bash check <command|path>", "Validate Bash syntax without executing it")
     table.add_row("/mimic", "Generate a rule-based conversation reply")
     table.add_row("/listen", "Capture voice input when STT is enabled")
     table.add_row("/settings", "Manage Solace configuration")
@@ -648,6 +649,28 @@ def _handle_explain(args: str) -> None:
     console.print(Panel("\n".join(lines), title="Bash explain"))
 
 
+def _handle_bash(args: str) -> None:
+    action, _, value = args.strip().partition(" ")
+    if action.lower() != "check" or not value.strip():
+        console.print("[yellow]Usage: /bash check <command-or-script-path>[/]")
+        return
+    try:
+        result = bash_intel.check_bash(value)
+    except (FileNotFoundError, RuntimeError, ValueError, OSError) as exc:
+        console.print(f"[red]Bash check failed:[/] {exc}")
+        return
+
+    status = "[green]VALID[/]" if result.syntax_valid else "[red]INVALID[/]"
+    sections = [f"Syntax: {status}", f"Source: {result.source}", result.diagnostics]
+    if result.safety:
+        sections.append("Safety warnings:\n" + "\n".join(f"- {warning}" for warning in result.safety))
+    else:
+        sections.append("Safety warnings: none detected by the local rules.")
+    if result.explanation:
+        sections.append("Explanation:\n" + "\n".join(result.explanation))
+    console.print(Panel("\n\n".join(sections), title="Bash check"))
+
+
 COMMANDS: Dict[str, Callable[[str], None]] = {
     "help": _handle_help,
     "diary": lambda args: _capture_entry("diary", args),
@@ -666,6 +689,7 @@ COMMANDS: Dict[str, Callable[[str], None]] = {
     "ask": _handle_ask,
     "debug": _handle_debug,
     "explain": _handle_explain,
+    "bash": _handle_bash,
     "mimic": _handle_mimic,
     "settings": _handle_settings,
     "listen": _handle_listen,

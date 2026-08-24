@@ -20,6 +20,7 @@ Solace commands all start with `/`. The launcher also accepts `--speak` and `--l
 | `/ask bash <topic>` | Explain Bash concepts such as pipes, redirects, quoting, and command substitution. |
 | `/debug <error>` | Match common Bash errors to likely causes and concise fixes. |
 | `/explain [bash] <command>` | Parse and explain Bash command tokens, flags, pipes, and redirects. |
+| `/bash check <command-or-script-path>` | Run a non-executing syntax check and report safety warnings. |
 | `/mimic <text>` | Generate a rule-based conversational reply. |
 | `/listen` | Capture speech input when STT is enabled. |
 | `/settings [subcommand]` | Configure password, voice, tone, alias, backups and fallback mode. |
