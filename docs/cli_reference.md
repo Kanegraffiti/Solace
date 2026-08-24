@@ -21,6 +21,11 @@ Solace commands all start with `/`. The launcher also accepts `--speak` and `--l
 | `/debug <error>` | Match common Bash errors to likely causes and concise fixes. |
 | `/explain [bash] <command>` | Parse and explain Bash command tokens, flags, pipes, and redirects. |
 | `/bash check <command-or-script-path>` | Run a non-executing syntax check and report safety warnings. |
+| `/toolkit status` | Detect Termux Toolkit and show its version, location, and command count. |
+| `/toolkit list` | List toolkit commands currently available to Solace. |
+| `/toolkit has <tool>` | Check whether a particular toolkit capability is installed. |
+| `/toolkit man [category] [tool]` | Read the toolkit manuals without leaving Solace. |
+| `/toolkit run <tool> [arguments...]` | Run an installed toolkit command through its stable `ttk` interface. |
 | `/mimic <text>` | Generate a rule-based conversational reply. |
 | `/listen` | Capture speech input when STT is enabled. |
 | `/settings [subcommand]` | Configure password, voice, tone, alias, backups and fallback mode. |
