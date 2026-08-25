@@ -43,6 +43,7 @@ from solace.excel_skill import (  # noqa: E402
 )
 from solace.file_skill import FileManager, human_size, parse_intent  # noqa: E402
 from solace.local_llm import run_qwen, runtime_status  # noqa: E402
+from solace.updater import UpdateError, update_solace  # noqa: E402
 from solace.user_manual import (  # noqa: E402
     MANUAL_TEXT,
     set_startup_manual,
@@ -519,13 +520,37 @@ def _is_scripted(argv: Sequence[str]) -> bool:
     return any(arg in scripted_flags or arg.startswith("--command=") for arg in argv)
 
 
-def main(argv: Optional[list[str]] = None) -> None:
+def main(argv: Optional[list[str]] = None) -> int:
     args = list(sys.argv[1:] if argv is None else argv)
+    if args and args[0] == "update":
+        if len(args) != 1:
+            core.console.print("[yellow]Usage: solace update[/]")
+            return 2
+        core.console.print("[cyan]Checking the canonical Solace repository for updates...[/]")
+        try:
+            result = update_solace(PROJECT_ROOT)
+        except UpdateError as exc:
+            core.console.print(Panel(str(exc), title="Solace update stopped", border_style="red"))
+            return 1
+        if not result.changed:
+            core.console.print(Panel("Solace is already up to date. User data was not touched.", title="Solace update"))
+            return 0
+        preserved = "\n".join(f"- {path}" for path in result.preserved_data)
+        core.console.print(
+            Panel(
+                f"Updated {result.previous_commit[:12]} → {result.current_commit[:12]}.\n\n"
+                f"Preserved user data:\n{preserved}",
+                title="Solace updated",
+                border_style="green",
+            )
+        )
+        return 0
     _register_extensions()
     if not _is_scripted(args) and startup_manual_enabled():
         _show_manual()
     core.main(args)
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())
