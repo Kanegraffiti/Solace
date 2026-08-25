@@ -382,6 +382,7 @@ I finished the first deployment today
 | `/file <request>` | Safely find/copy/move/rename/trash/restore user files. |
 | `/file history` | Show file operations performed by Solace. |
 | `/file undo` | Undo the latest supported Solace file mutation. |
+| `/do inspect <project>` | Find a folder/ZIP, safely extract it, detect its stack, and suggest launch commands. |
 | `/qwen <prompt>` | Start local Qwen with an initial prompt. |
 | `/qwen` | Open interactive local Qwen. |
 | `/qwen status` | Check whether the local Qwen runtime/model are ready. |
