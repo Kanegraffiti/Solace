@@ -2,6 +2,9 @@
 
 Solace commands all start with `/`. The launcher also accepts `--speak` and `--listen` flags to temporarily enable voice features for the current session.
 
+The shell-level `solace update` command safely fast-forwards a clean canonical
+checkout and refreshes its disposable environment without changing user data.
+
 | Command | Description |
 | ------- | ----------- |
 | `/diary [text]` | Add a diary entry. Prompts for timestamp and tags when needed. |

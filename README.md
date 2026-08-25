@@ -98,6 +98,22 @@ solace
 
 ### Refresh an existing checkout
 
+From any directory, the installed launcher can safely update its own checkout:
+
+```bash
+solace update
+```
+
+This accepts only a clean `main` checkout connected to the canonical
+`Kanegraffiti/Solace` repository and performs a fast-forward update. It refuses
+local changes, divergent commits, unexpected remotes, and detached/feature
+branches rather than overwriting them. After a real code update it refreshes
+the disposable `.venv`, dependencies, and launchers through `install.sh`.
+Configuration, journals, training data, trash, file history, local models, and
+the llama.cpp checkout remain outside the files replaced by Git.
+
+The manual equivalent remains:
+
 ```bash
 cd ~/Solace
 git pull
