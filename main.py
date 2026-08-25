@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import shlex
 import shutil
 import sys
 from collections.abc import Iterable, Iterator
@@ -35,6 +36,7 @@ from solace.logic import bash_intel, python_intel
 from solace.logic.companion import respond as companion_respond
 from solace.logic.converse import ConversationState
 from solace.semantic import recent_recaps
+from solace.toolkit import ToolkitClient, ToolkitUnavailable
 from tui.app import SolaceApp
 from tui.controllers import (
     JournalController,
@@ -589,6 +591,7 @@ def _handle_help(_: str) -> None:
     table.add_row("/debug <error>", "Match common Bash errors to likely fixes")
     table.add_row("/explain [bash] <command>", "Explain Bash command tokens and flags")
     table.add_row("/bash check <command|path>", "Validate Bash syntax without executing it")
+    table.add_row("/toolkit [status|list|man|run]", "Discover and use an installed Termux Toolkit")
     table.add_row("/mimic", "Generate a rule-based conversation reply")
     table.add_row("/listen", "Capture voice input when STT is enabled")
     table.add_row("/settings", "Manage Solace configuration")
@@ -671,6 +674,68 @@ def _handle_bash(args: str) -> None:
     console.print(Panel("\n\n".join(sections), title="Bash check"))
 
 
+def _handle_toolkit(args: str) -> None:
+    try:
+        parts = shlex.split(args)
+    except ValueError as exc:
+        console.print(f"[red]Invalid toolkit arguments:[/] {exc}")
+        return
+
+    action = parts[0].lower() if parts else "status"
+    values = parts[1:]
+    client = ToolkitClient()
+
+    if not client.available:
+        console.print(
+            "[yellow]Termux Toolkit was not detected.[/] Install it, then make sure "
+            "[bold]ttk help[/] works in this terminal."
+        )
+        return
+
+    try:
+        if action == "status":
+            table = Table(title="Termux Toolkit")
+            table.add_column("Property")
+            table.add_column("Value")
+            table.add_row("Status", "Connected")
+            table.add_row("Version", client.version() or "unknown")
+            table.add_row("Location", client.root())
+            table.add_row("Commands", str(len(client.list_tools())))
+            console.print(table)
+            return
+        if action == "list":
+            tools = client.list_tools()
+            console.print("Available toolkit commands:\n" + "\n".join(f"- {tool}" for tool in tools))
+            return
+        if action == "has":
+            if len(values) != 1:
+                console.print("[yellow]Usage: /toolkit has <tool>[/]")
+                return
+            state = "available" if client.has(values[0]) else "not installed"
+            console.print(f"Toolkit command [bold]{values[0]}[/] is {state}.")
+            return
+        if action == "run":
+            if not values:
+                console.print("[yellow]Usage: /toolkit run <tool> [arguments...][/]")
+                return
+            result = client.run(values[0], values[1:])
+            if result.returncode:
+                console.print(f"[red]Toolkit command exited with status {result.returncode}.[/]")
+            return
+        if action == "man":
+            result = client.man(values)
+            if result.returncode:
+                console.print(f"[red]Manual command exited with status {result.returncode}.[/]")
+            return
+    except (ToolkitUnavailable, RuntimeError, KeyError, ValueError, OSError) as exc:
+        console.print(f"[red]Toolkit error:[/] {exc}")
+        return
+
+    console.print(
+        "[yellow]Usage: /toolkit [status|list|has <tool>|man [category] [tool]|run <tool> [args...]][/]"
+    )
+
+
 COMMANDS: Dict[str, Callable[[str], None]] = {
     "help": _handle_help,
     "diary": lambda args: _capture_entry("diary", args),
@@ -690,6 +755,7 @@ COMMANDS: Dict[str, Callable[[str], None]] = {
     "debug": _handle_debug,
     "explain": _handle_explain,
     "bash": _handle_bash,
+    "toolkit": _handle_toolkit,
     "mimic": _handle_mimic,
     "settings": _handle_settings,
     "listen": _handle_listen,
