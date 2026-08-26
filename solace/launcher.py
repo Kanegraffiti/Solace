@@ -43,6 +43,15 @@ from solace.excel_skill import (  # noqa: E402
 )
 from solace.file_skill import FileManager, human_size, parse_intent  # noqa: E402
 from solace.local_llm import run_qwen, runtime_status  # noqa: E402
+from solace.project_task import (  # noqa: E402
+    ProjectInspection,
+    ProjectTaskError,
+    choose_project_matches,
+    extract_zip,
+    inspect_project,
+    project_query,
+    validate_zip,
+)
 from solace.updater import UpdateError, update_solace  # noqa: E402
 from solace.user_manual import (  # noqa: E402
     MANUAL_TEXT,
@@ -336,6 +345,103 @@ def _handle_file(args: str) -> None:
         core.console.print(Panel(str(exc), title="File action stopped", border_style="red"))
 
 
+def _do_usage() -> None:
+    table = Table(title="Solace task planner")
+    table.add_column("Example")
+    table.add_column("What Solace does")
+    table.add_row('/do inspect "Lola website"', "Find the folder or ZIP, then detect its tech stack")
+    table.add_row('/do find "portfolio.zip"', "Preview safe extraction and inspect the project")
+    core.console.print(table)
+    core.console.print(
+        "[dim]This first planner does not install dependencies, execute project code, or start a server.[/]"
+    )
+
+
+def _choose_project(query: str) -> Optional[Path]:
+    matches = choose_project_matches(FILE_MANAGER.find(query, limit=25))
+    if not matches:
+        core.console.print(f"[yellow]I couldn't find a project folder or ZIP matching '{query}'.[/]")
+        return None
+    if len(matches) == 1:
+        return matches[0]
+    _show_file_paths(matches, "Possible projects")
+    if core.PROMPT_DEFAULTS_ONLY:
+        core.console.print("[yellow]Multiple projects found; scripted mode will not guess.[/]")
+        return None
+    choice = Prompt.ask("Choose a number or type cancel")
+    if choice.strip().lower() in {"cancel", "c", "quit", "exit"}:
+        return None
+    if choice.strip().isdigit():
+        index = int(choice.strip())
+        if 1 <= index <= len(matches):
+            return matches[index - 1]
+    core.console.print("[red]Invalid selection.[/]")
+    return None
+
+
+def _show_project_plan(source: Path, *, extraction: Optional[Path] = None) -> None:
+    table = Table(title="Project task plan", show_lines=True)
+    table.add_column("Step")
+    table.add_column("Safety")
+    table.add_column("Status")
+    table.add_row("Find the requested project", "Read-only", str(source))
+    if extraction is not None:
+        table.add_row("Validate ZIP paths, links, size and integrity", "Read-only", "Ready")
+        table.add_row("Extract to a new directory", "Changes files", str(extraction))
+    table.add_row("Detect the tech stack", "Read-only", "Pending")
+    table.add_row("Prepare launch guidance", "Read-only", "Pending")
+    core.console.print(table)
+
+
+def _show_project_inspection(result: ProjectInspection) -> None:
+    sections = ["[bold]Project[/bold]\n{}".format(result.root)]
+    sections.append("[bold]Detected stack[/bold]\n{}".format(", ".join(result.stack) or "Unknown"))
+    evidence = "\n".join("- " + item for item in result.evidence) or "- None"
+    sections.append("[bold]Evidence[/bold]\n{}".format(evidence))
+    if result.next_commands:
+        commands = "\n".join(
+            "{}. {}".format(index, command) for index, command in enumerate(result.next_commands, 1)
+        )
+        sections.append("[bold]Suggested commands — not executed[/bold]\n{}".format(commands))
+    sections.append("[bold]Notes[/bold]\n{}".format("\n".join("- " + note for note in result.notes)))
+    core.console.print(Panel("\n\n".join(sections), title="Project inspection", border_style="green"))
+
+
+def _handle_do(args: str) -> None:
+    request = args.strip()
+    if not request:
+        _do_usage()
+        return
+    query = project_query(request)
+    if not query:
+        core.console.print("[yellow]Tell me the project folder or ZIP name.[/]")
+        _do_usage()
+        return
+
+    try:
+        source = _choose_project(query)
+        if source is None:
+            return
+        root = source
+        if source.is_file():
+            FILE_MANAGER.assert_allowed(source)
+            destination = validate_zip(source)
+            FILE_MANAGER.assert_allowed(destination)
+            _show_project_plan(source, extraction=destination)
+            if not _confirm_mutation("Extract this ZIP to a new folder?\n{}\n→ {}".format(source, destination)):
+                core.console.print("[yellow]Stopped before extraction. Nothing was changed.[/]")
+                return
+            root = extract_zip(source)
+            core.console.print(Panel(str(root), title="ZIP extracted", border_style="green"))
+        else:
+            _show_project_plan(source)
+        result = inspect_project(root)
+        _show_project_inspection(result)
+        core._log_event("do", "inspect {}".format(result.root.name)[:80])
+    except (FileExistsError, OSError, PermissionError, ProjectTaskError, ValueError) as exc:
+        core.console.print(Panel(str(exc), title="Project task stopped", border_style="red"))
+
+
 def _excel_usage() -> None:
     table = Table(title="Excel skill")
     table.add_column("Command")
@@ -499,6 +605,7 @@ def _extended_help(_: str) -> None:
     table.add_row("/file <request>", "Safely find/copy/move/rename/trash/restore user files")
     table.add_row("/file history", "Show file operations performed by Solace")
     table.add_row("/file undo", "Undo the latest supported file operation")
+    table.add_row("/do inspect <project>", "Find/extract a project, detect its stack, and prepare launch steps")
     table.add_row("/manual", "Show the tiny startup manual now")
     table.add_row("/manual off", "Hide the manual on future starts")
     table.add_row("/manual on", "Restore the manual on future starts")
@@ -513,6 +620,7 @@ def _register_extensions() -> None:
     core.COMMANDS["qwen"] = _handle_qwen
     core.COMMANDS["excel"] = _handle_excel
     core.COMMANDS["file"] = _handle_file
+    core.COMMANDS["do"] = _handle_do
 
 
 def _is_scripted(argv: Sequence[str]) -> bool:

@@ -24,6 +24,7 @@ checkout and refreshes its disposable environment without changing user data.
 | `/debug <error>` | Match common Bash errors to likely causes and concise fixes. |
 | `/explain [bash] <command>` | Parse and explain Bash command tokens, flags, pipes, and redirects. |
 | `/bash check <command-or-script-path>` | Run a non-executing syntax check and report safety warnings. |
+| `/do inspect <project>` | Find a project folder or ZIP, safely extract it with confirmation, detect its stack, and suggest launch commands without running them. |
 | `/toolkit status` | Detect Termux Toolkit and show its version, location, and command count. |
 | `/toolkit list` | List toolkit commands currently available to Solace. |
 | `/toolkit has <tool>` | Check whether a particular toolkit capability is installed. |

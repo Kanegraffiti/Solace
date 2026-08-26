@@ -103,6 +103,11 @@ class FileManager:
             return resolved
         raise UnsafePathError("Solace will not modify paths outside your home/shared storage: {}".format(path))
 
+    def assert_allowed(self, path: Path) -> Path:
+        """Return a resolved user-owned path or raise ``UnsafePathError``."""
+
+        return self._assert_allowed(path)
+
     def expand_path(self, value: str, *, cwd: Optional[Path] = None) -> Path:
         raw = Path(value.strip()).expanduser()
         if raw.is_absolute():
