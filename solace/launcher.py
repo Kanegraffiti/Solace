@@ -47,10 +47,13 @@ from solace.project_task import (  # noqa: E402
     ProjectInspection,
     ProjectTaskError,
     choose_project_matches,
+    execute_project_command,
     extract_zip,
     inspect_project,
+    prepare_project_command,
     project_query,
     validate_zip,
+    wants_project_execution,
 )
 from solace.updater import UpdateError, update_solace  # noqa: E402
 from solace.user_manual import (  # noqa: E402
@@ -351,9 +354,10 @@ def _do_usage() -> None:
     table.add_column("What Solace does")
     table.add_row('/do inspect "Lola website"', "Find the folder or ZIP, then detect its tech stack")
     table.add_row('/do find "portfolio.zip"', "Preview safe extraction and inspect the project")
+    table.add_row('/do run "Lola website"', "Inspect, then ask before each suggested project command")
     core.console.print(table)
     core.console.print(
-        "[dim]This first planner does not install dependencies, execute project code, or start a server.[/]"
+        "[dim]/do inspect is read-only. /do run executes only after a separate confirmation for every command.[/]"
     )
 
 
@@ -412,6 +416,7 @@ def _handle_do(args: str) -> None:
     if not request:
         _do_usage()
         return
+    execute = wants_project_execution(request)
     query = project_query(request)
     if not query:
         core.console.print("[yellow]Tell me the project folder or ZIP name.[/]")
@@ -437,6 +442,37 @@ def _handle_do(args: str) -> None:
             _show_project_plan(source)
         result = inspect_project(root)
         _show_project_inspection(result)
+        if execute:
+            if core.PROMPT_DEFAULTS_ONLY:
+                core.console.print("[yellow]Scripted mode will not execute project code.[/]")
+                return
+            if not result.next_commands:
+                core.console.print("[yellow]No supported project commands were detected.[/]")
+                return
+            for suggested in result.next_commands:
+                prepared = prepare_project_command(suggested, result)
+                core.console.print(
+                    Panel(
+                        "Command: {}\nDirectory: {}\nRisk: {}".format(
+                            prepared.command, result.root, prepared.risk
+                        ),
+                        title="Execution approval required",
+                        border_style="yellow",
+                    )
+                )
+                if not _confirm_mutation("Run this exact command?"):
+                    core.console.print("[yellow]Skipped: {}[/]".format(prepared.command))
+                    continue
+                returncode = execute_project_command(prepared, result.root)
+                if returncode != 0:
+                    core.console.print(
+                        Panel(
+                            "Command exited with status {}. Remaining steps were not run.".format(returncode),
+                            title="Project command stopped",
+                            border_style="red",
+                        )
+                    )
+                    break
         core._log_event("do", "inspect {}".format(result.root.name)[:80])
     except (FileExistsError, OSError, PermissionError, ProjectTaskError, ValueError) as exc:
         core.console.print(Panel(str(exc), title="Project task stopped", border_style="red"))
@@ -606,6 +642,7 @@ def _extended_help(_: str) -> None:
     table.add_row("/file history", "Show file operations performed by Solace")
     table.add_row("/file undo", "Undo the latest supported file operation")
     table.add_row("/do inspect <project>", "Find/extract a project, detect its stack, and prepare launch steps")
+    table.add_row("/do run <project>", "Inspect, then approve or skip each detected project command")
     table.add_row("/manual", "Show the tiny startup manual now")
     table.add_row("/manual off", "Hide the manual on future starts")
     table.add_row("/manual on", "Restore the manual on future starts")

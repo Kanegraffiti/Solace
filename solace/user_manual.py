@@ -14,6 +14,7 @@ MANUAL_TEXT = """[bold]The tiny Solace manual[/bold]
 • /excel <question> → formulas, PivotTables, charts and workbook tools.
 • /file <request> → safely find, copy, move, rename, trash and restore files.
 • /do inspect <project> → find/extract a project and identify how to run it.
+• /do run <project> → inspect, then confirm each suggested command before it runs.
 • /search <query> → find journal memories.
 • /code bash <topic> → get a deterministic Bash recipe.
 • /help → see every Solace command.

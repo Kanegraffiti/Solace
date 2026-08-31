@@ -1,4 +1,5 @@
 import stat
+import subprocess
 import zipfile
 from pathlib import Path
 
@@ -7,10 +8,13 @@ import pytest
 from solace.project_task import (
     ProjectTaskError,
     choose_project_matches,
+    execute_project_command,
     extract_zip,
     inspect_project,
+    prepare_project_command,
     project_query,
     validate_zip,
+    wants_project_execution,
 )
 
 
@@ -18,6 +22,9 @@ def test_project_query_supports_conversational_and_explicit_requests() -> None:
     assert project_query('inspect "Lola website"') == "Lola website"
     assert project_query("find my portfolio zip in downloads, unpack it and inspect it") == "portfolio"
     assert project_query("analyse storefront project") == "storefront"
+    assert project_query("run storefront") == "storefront"
+    assert wants_project_execution("run storefront") is True
+    assert wants_project_execution("inspect storefront") is False
 
 
 def test_choose_project_matches_ignores_files_and_nested_duplicates(tmp_path: Path) -> None:
@@ -108,3 +115,31 @@ def test_existing_extraction_destination_is_never_merged(tmp_path: Path) -> None
         extract_zip(archive)
 
     assert original.read_text(encoding="utf-8") == "keep"
+
+
+def test_project_command_must_come_from_inspection(tmp_path: Path) -> None:
+    (tmp_path / "index.html").write_text("hello", encoding="utf-8")
+    inspection = inspect_project(tmp_path)
+
+    with pytest.raises(ProjectTaskError, match="only run commands produced"):
+        prepare_project_command("rm -rf .", inspection)
+
+
+def test_project_command_runs_without_a_shell(tmp_path: Path, monkeypatch) -> None:
+    (tmp_path / "package.json").write_text(
+        '{"scripts":{"dev":"vite"}}', encoding="utf-8"
+    )
+    inspection = inspect_project(tmp_path)
+    prepared = prepare_project_command("npm run dev", inspection)
+    calls = []
+
+    def fake_run(argv, **kwargs):
+        calls.append((argv, kwargs))
+        return subprocess.CompletedProcess(argv, 0)
+
+    monkeypatch.setattr("solace.project_task.subprocess.run", fake_run)
+
+    assert execute_project_command(prepared, tmp_path) == 0
+    assert calls[0][0] == ["npm", "run", "dev"]
+    assert calls[0][1]["cwd"] == str(tmp_path.resolve())
+    assert calls[0][1]["shell"] is False
