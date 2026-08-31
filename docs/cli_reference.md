@@ -25,6 +25,7 @@ checkout and refreshes its disposable environment without changing user data.
 | `/explain [bash] <command>` | Parse and explain Bash command tokens, flags, pipes, and redirects. |
 | `/bash check <command-or-script-path>` | Run a non-executing syntax check and report safety warnings. |
 | `/do inspect <project>` | Find a project folder or ZIP, safely extract it with confirmation, detect its stack, and suggest launch commands without running them. |
+| `/do run <project>` | Inspect a project, then show the exact command, directory, and risk before asking whether to execute each step. Scripted mode refuses execution. |
 | `/toolkit status` | Detect Termux Toolkit and show its version, location, and command count. |
 | `/toolkit list` | List toolkit commands currently available to Solace. |
 | `/toolkit has <tool>` | Check whether a particular toolkit capability is installed. |

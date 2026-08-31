@@ -50,3 +50,28 @@ def test_scripted_do_never_extracts_without_confirmation(temp_home: Path, monkey
 
     assert not (temp_home / "portfolio").exists()
     assert "Nothing was changed" in capsys.readouterr().out
+
+
+def test_scripted_do_run_never_executes_project_code(temp_home: Path, monkeypatch, capsys) -> None:
+    sys.modules.pop("solace.launcher", None)
+    launcher = importlib.import_module("solace.launcher")
+    project = temp_home / "storefront"
+    project.mkdir()
+    (project / "package.json").write_text(
+        '{"scripts":{"dev":"vite"}}', encoding="utf-8"
+    )
+    launcher.FILE_MANAGER = FileManager(
+        home=temp_home,
+        search_roots=[temp_home],
+        state_dir=temp_home / ".solace",
+    )
+    monkeypatch.setattr(launcher.core, "PROMPT_DEFAULTS_ONLY", True)
+    monkeypatch.setattr(
+        launcher,
+        "execute_project_command",
+        lambda *args, **kwargs: (_ for _ in ()).throw(AssertionError("must not execute")),
+    )
+
+    launcher._handle_do("run storefront")
+
+    assert "Scripted mode will not execute project code" in capsys.readouterr().out

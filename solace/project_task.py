@@ -4,7 +4,9 @@ from __future__ import annotations
 
 import json
 import re
+import shlex
 import stat
+import subprocess
 import zipfile
 from dataclasses import dataclass
 from pathlib import Path, PurePosixPath
@@ -12,6 +14,18 @@ from typing import Dict, List, Sequence
 
 MAX_ARCHIVE_MEMBERS = 10_000
 MAX_ARCHIVE_BYTES = 1024 * 1024 * 1024
+COMMAND_TIMEOUT_SECONDS = 15 * 60
+ALLOWED_PROJECT_COMMANDS = {
+    "cargo",
+    "composer",
+    "go",
+    "npm",
+    "php",
+    "pnpm",
+    "python",
+    "python3",
+    "yarn",
+}
 
 
 class ProjectTaskError(RuntimeError):
@@ -27,6 +41,13 @@ class ProjectInspection:
     notes: Sequence[str]
 
 
+@dataclass(frozen=True)
+class ProjectCommand:
+    command: str
+    argv: Sequence[str]
+    risk: str
+
+
 def project_query(request: str) -> str:
     """Extract a conservative project name/path from a supported ``/do`` request."""
 
@@ -36,7 +57,7 @@ def project_query(request: str) -> str:
         return quoted.group(1).strip()
 
     value = re.sub(
-        r"^(?:please\s+)?(?:find|locate|inspect|analyse|analyze|check|open)\s+",
+        r"^(?:please\s+)?(?:find|locate|inspect|analyse|analyze|check|open|run)\s+",
         "",
         value,
         flags=re.IGNORECASE,
@@ -46,6 +67,12 @@ def project_query(request: str) -> str:
     value = re.sub(r"^(?:the|my|a|an)\s+", "", value, flags=re.IGNORECASE)
     value = re.sub(r"\s+(?:website|project|folder|zip|archive)$", "", value, flags=re.IGNORECASE)
     return value.strip()
+
+
+def wants_project_execution(request: str) -> bool:
+    """Return whether a request explicitly selects the guarded execution flow."""
+
+    return bool(re.match(r"^\s*run(?:\s+|$)", request, flags=re.IGNORECASE))
 
 
 def supported_project(path: Path) -> bool:
@@ -221,14 +248,64 @@ def inspect_project(path: Path) -> ProjectInspection:
     return ProjectInspection(root, list(dict.fromkeys(stack)), evidence, list(dict.fromkeys(commands)), notes)
 
 
+def prepare_project_command(command: str, inspection: ProjectInspection) -> ProjectCommand:
+    """Validate one detector-produced command and prepare a shell-free invocation."""
+
+    if command not in inspection.next_commands:
+        raise ProjectTaskError("Solace will only run commands produced by this project inspection.")
+    try:
+        argv = shlex.split(command, posix=True)
+    except ValueError as exc:
+        raise ProjectTaskError("The suggested command could not be parsed safely.") from exc
+    if not argv or argv[0] not in ALLOWED_PROJECT_COMMANDS:
+        raise ProjectTaskError("This project command is not on Solace's execution allowlist.")
+    if any(token in {";", "&&", "||", "|", ">", ">>", "<"} for token in argv):
+        raise ProjectTaskError("Shell operators are not allowed in project execution commands.")
+
+    installers = {"install", "-r", "-e"}
+    risk = (
+        "High — dependency installation can run code supplied by the project."
+        if installers.intersection(argv[1:])
+        else "High — this starts code supplied by the project."
+    )
+    return ProjectCommand(command, argv, risk)
+
+
+def execute_project_command(command: ProjectCommand, root: Path) -> int:
+    """Run one approved project command directly in its project directory."""
+
+    project_root = root.resolve()
+    if not project_root.is_dir():
+        raise ProjectTaskError("The inspected project directory no longer exists.")
+    try:
+        completed = subprocess.run(
+            list(command.argv),
+            cwd=str(project_root),
+            check=False,
+            shell=False,
+            timeout=COMMAND_TIMEOUT_SECONDS,
+        )
+    except FileNotFoundError as exc:
+        raise ProjectTaskError("Required command is not installed: {}".format(command.argv[0])) from exc
+    except subprocess.TimeoutExpired as exc:
+        raise ProjectTaskError("Project command stopped after the 15-minute safety timeout.") from exc
+    except KeyboardInterrupt:
+        return 130
+    return completed.returncode
+
+
 __all__ = [
     "ProjectInspection",
+    "ProjectCommand",
     "ProjectTaskError",
     "archive_destination",
     "choose_project_matches",
     "extract_zip",
+    "execute_project_command",
     "inspect_project",
     "project_query",
+    "prepare_project_command",
     "supported_project",
     "validate_zip",
+    "wants_project_execution",
 ]
