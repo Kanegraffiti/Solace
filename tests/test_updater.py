@@ -59,7 +59,11 @@ def test_update_fast_forwards_and_preserves_user_data(tmp_path, monkeypatch):
 
     assert result.changed is True
     assert ("merge", "--ff-only", "origin/main") in calls
-    assert install_calls[0][0] == ["/usr/bin/bash", str(project / "install.sh")]
+    assert install_calls[0][0] == [
+        "/usr/bin/bash",
+        str(project / "install.sh"),
+        "--preserve-config",
+    ]
     assert data.read_text(encoding="utf-8") == "private journal"
     assert config.read_text(encoding="utf-8") == "private config"
 
