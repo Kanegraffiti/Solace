@@ -203,9 +203,13 @@ def _ensure_launchers(alias: str, env_name: str) -> None:
         print(f"Qwen launcher available: {qwen_launcher}")
 
 
-def _initialise_config(alias: str) -> None:
+def _initialise_config(alias: str, *, preserve_existing: bool = False) -> None:
     if CONFIG_PATH.exists():
         config = load_config()
+        if preserve_existing:
+            ensure_storage_dirs(config)
+            print("Existing Solace profile and security settings preserved.")
+            return
     else:
         config = json.loads(json.dumps(DEFAULT_CONFIG))
 
@@ -232,6 +236,11 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="Install Solace in the current environment")
     parser.add_argument("--alias", default=DEFAULT_ALIAS_NAME, help="Command name to use (default: solace)")
     parser.add_argument("--skip-deps", action="store_true", help="Skip dependency installation")
+    parser.add_argument(
+        "--preserve-config",
+        action="store_true",
+        help="Refresh an existing installation without repeating or changing onboarding settings",
+    )
     parser.add_argument(
         "--extras",
         nargs="*",
@@ -264,8 +273,11 @@ def main() -> None:
     else:
         print("Skipping dependency installation per --skip-deps")
 
-    _ensure_launchers(args.alias, env_name)
-    _initialise_config(args.alias)
+    alias = args.alias
+    if args.preserve_config and CONFIG_PATH.exists():
+        alias = str(load_config().get("alias") or alias)
+    _ensure_launchers(alias, env_name)
+    _initialise_config(alias, preserve_existing=args.preserve_config)
 
     if args.setup_qwen:
         _setup_qwen(env_name)
@@ -275,7 +287,7 @@ def main() -> None:
             "or `bash scripts/setup-qwen-termux.sh` when you want to configure it."
         )
 
-    print(f"Solace installation complete. Run `{args.alias}` to start your assistant.")
+    print(f"Solace installation complete. Run `{alias}` to start your assistant.")
     print("The startup mini-manual explains the basics; use `/manual off` to hide it later.")
 
 

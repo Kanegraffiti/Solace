@@ -108,7 +108,7 @@ def update_solace(project_root: Path) -> UpdateResult:
             f"Solace code updated to {current[:12]}, but install.sh could not be run. "
             "Your user data remains untouched."
         )
-    completed = subprocess.run([bash, str(installer)], cwd=root, check=False)
+    completed = subprocess.run([bash, str(installer), "--preserve-config"], cwd=root, check=False)
     if completed.returncode != 0:
         raise UpdateError(
             f"Solace code updated to {current[:12]}, but dependency/launcher refresh failed. "
