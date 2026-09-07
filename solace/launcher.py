@@ -46,6 +46,7 @@ from solace.local_llm import run_qwen, runtime_status  # noqa: E402
 from solace.project_task import (  # noqa: E402
     ProjectInspection,
     ProjectTaskError,
+    build_project_recovery,
     choose_project_matches,
     execute_project_command,
     extract_zip,
@@ -463,16 +464,64 @@ def _handle_do(args: str) -> None:
                 if not _confirm_mutation("Run this exact command?"):
                     core.console.print("[yellow]Skipped: {}[/]".format(prepared.command))
                     continue
-                returncode = execute_project_command(prepared, result.root)
-                if returncode != 0:
+                execution = execute_project_command(prepared, result.root)
+                if execution.returncode == 0 and (execution.stdout or execution.stderr):
                     core.console.print(
                         Panel(
-                            "Command exited with status {}. Remaining steps were not run.".format(returncode),
-                            title="Project command stopped",
+                            execution.stdout.strip() or execution.stderr.strip(),
+                            title="Command output",
+                            border_style="green",
+                        )
+                    )
+                if execution.returncode != 0:
+                    evidence = (
+                        execution.stderr.strip()
+                        or execution.stdout.strip()
+                        or "No command output was captured."
+                    )
+                    recovery = build_project_recovery(execution)
+                    diagnosis = recovery.diagnosis or "No deterministic diagnosis matched this failure."
+                    validation = (
+                        "VALID — no Bash syntax errors found."
+                        if recovery.retry_check.syntax_valid
+                        else "INVALID — {}".format(recovery.retry_check.diagnostics)
+                    )
+                    core.console.print(
+                        Panel(
+                            "Exit status: {}\n\nOutput:\n{}\n\nDiagnosis:\n{}\n\n"
+                            "Checked retry:\n{}\n{}{}".format(
+                                execution.returncode,
+                                evidence,
+                                diagnosis,
+                                prepared.command,
+                                validation,
+                                "\n\nOutput was truncated to its most recent portion."
+                                if execution.output_truncated
+                                else "",
+                            ),
+                            title="Project command failed",
                             border_style="red",
                         )
                     )
-                    break
+                    if not recovery.retry_check.syntax_valid:
+                        core.console.print("[red]Retry blocked because Bash validation failed.[/]")
+                        break
+                    if not _confirm_mutation("Retry this exact checked command?"):
+                        core.console.print("[yellow]Retry declined. Remaining steps were not run.[/]")
+                        break
+                    retry = execute_project_command(prepared, result.root)
+                    if retry.returncode != 0:
+                        core.console.print(
+                            Panel(
+                                "Retry exited with status {}. Remaining steps were not run.".format(
+                                    retry.returncode
+                                ),
+                                title="Project command stopped",
+                                border_style="red",
+                            )
+                        )
+                        break
+                    core.console.print("[green]Checked retry succeeded.[/]")
         core._log_event("do", "inspect {}".format(result.root.name)[:80])
     except (FileExistsError, OSError, PermissionError, ProjectTaskError, ValueError) as exc:
         core.console.print(Panel(str(exc), title="Project task stopped", border_style="red"))

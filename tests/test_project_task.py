@@ -7,6 +7,7 @@ import pytest
 
 from solace.project_task import (
     ProjectTaskError,
+    build_project_recovery,
     choose_project_matches,
     execute_project_command,
     extract_zip,
@@ -139,7 +140,33 @@ def test_project_command_runs_without_a_shell(tmp_path: Path, monkeypatch) -> No
 
     monkeypatch.setattr("solace.project_task.subprocess.run", fake_run)
 
-    assert execute_project_command(prepared, tmp_path) == 0
+    result = execute_project_command(prepared, tmp_path)
+    assert result.returncode == 0
     assert calls[0][0] == ["npm", "run", "dev"]
     assert calls[0][1]["cwd"] == str(tmp_path.resolve())
     assert calls[0][1]["shell"] is False
+    assert calls[0][1]["capture_output"] is True
+
+
+def test_failed_project_command_is_bounded_and_diagnosed(tmp_path: Path, monkeypatch) -> None:
+    (tmp_path / "package.json").write_text('{"scripts":{"dev":"vite"}}', encoding="utf-8")
+    inspection = inspect_project(tmp_path)
+    prepared = prepare_project_command("npm run dev", inspection)
+
+    def fake_run(argv, **kwargs):
+        if argv[-1:] == ["-n"]:
+            return subprocess.CompletedProcess(argv, 0, "", "")
+        return subprocess.CompletedProcess(argv, 127, "", "x" * 20_000 + " command not found")
+
+    monkeypatch.setattr("solace.project_task.subprocess.run", fake_run)
+
+    execution = execute_project_command(prepared, tmp_path)
+    recovery = build_project_recovery(execution)
+
+    assert execution.returncode == 127
+    assert execution.output_truncated is True
+    assert "earlier output omitted" in execution.stderr
+    assert execution.stderr.endswith("command not found")
+    assert recovery.diagnosis is not None
+    assert "executable is not on PATH" in recovery.diagnosis
+    assert recovery.retry_check.syntax_valid is True
