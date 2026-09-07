@@ -10,11 +10,14 @@ import subprocess
 import zipfile
 from dataclasses import dataclass
 from pathlib import Path, PurePosixPath
-from typing import Dict, List, Sequence
+from typing import Dict, List, Optional, Sequence
+
+from solace.logic import bash_intel
 
 MAX_ARCHIVE_MEMBERS = 10_000
 MAX_ARCHIVE_BYTES = 1024 * 1024 * 1024
 COMMAND_TIMEOUT_SECONDS = 15 * 60
+MAX_CAPTURE_BYTES = 16_000
 ALLOWED_PROJECT_COMMANDS = {
     "cargo",
     "composer",
@@ -46,6 +49,31 @@ class ProjectCommand:
     command: str
     argv: Sequence[str]
     risk: str
+
+
+@dataclass(frozen=True)
+class ProjectCommandResult:
+    command: ProjectCommand
+    returncode: int
+    stdout: str
+    stderr: str
+    output_truncated: bool
+
+
+@dataclass(frozen=True)
+class ProjectRecovery:
+    diagnosis: Optional[str]
+    retry_check: bash_intel.BashCheckResult
+
+
+def _bounded_output(value: str, limit: int = MAX_CAPTURE_BYTES) -> tuple[str, bool]:
+    """Keep the useful tail of command output within a predictable boundary."""
+
+    encoded = value.encode("utf-8", errors="replace")
+    if len(encoded) <= limit:
+        return value, False
+    tail = encoded[-limit:].decode("utf-8", errors="replace")
+    return "[earlier output omitted]\n" + tail, True
 
 
 def project_query(request: str) -> str:
@@ -271,8 +299,8 @@ def prepare_project_command(command: str, inspection: ProjectInspection) -> Proj
     return ProjectCommand(command, argv, risk)
 
 
-def execute_project_command(command: ProjectCommand, root: Path) -> int:
-    """Run one approved project command directly in its project directory."""
+def execute_project_command(command: ProjectCommand, root: Path) -> ProjectCommandResult:
+    """Run one approved command and return bounded output for local diagnosis."""
 
     project_root = root.resolve()
     if not project_root.is_dir():
@@ -283,22 +311,52 @@ def execute_project_command(command: ProjectCommand, root: Path) -> int:
             cwd=str(project_root),
             check=False,
             shell=False,
+            capture_output=True,
+            text=True,
             timeout=COMMAND_TIMEOUT_SECONDS,
         )
-    except FileNotFoundError as exc:
-        raise ProjectTaskError("Required command is not installed: {}".format(command.argv[0])) from exc
+    except FileNotFoundError:
+        return ProjectCommandResult(
+            command,
+            127,
+            "",
+            "{}: command not found".format(command.argv[0]),
+            False,
+        )
     except subprocess.TimeoutExpired as exc:
         raise ProjectTaskError("Project command stopped after the 15-minute safety timeout.") from exc
     except KeyboardInterrupt:
-        return 130
-    return completed.returncode
+        return ProjectCommandResult(command, 130, "", "Interrupted by user.", False)
+    stdout, stdout_truncated = _bounded_output(completed.stdout or "")
+    stderr, stderr_truncated = _bounded_output(completed.stderr or "")
+    return ProjectCommandResult(
+        command,
+        completed.returncode,
+        stdout,
+        stderr,
+        stdout_truncated or stderr_truncated,
+    )
+
+
+def build_project_recovery(result: ProjectCommandResult) -> ProjectRecovery:
+    """Diagnose a failed command and validate its exact, allowlisted retry."""
+
+    if result.returncode == 0:
+        raise ValueError("Recovery is only available for failed project commands.")
+    evidence = result.stderr.strip() or result.stdout.strip()
+    diagnosis = bash_intel.debug_bash_error(evidence) if evidence else None
+    retry_check = bash_intel.check_bash(result.command.command)
+    return ProjectRecovery(diagnosis=diagnosis, retry_check=retry_check)
 
 
 __all__ = [
     "ProjectInspection",
     "ProjectCommand",
+    "ProjectCommandResult",
+    "ProjectRecovery",
     "ProjectTaskError",
     "archive_destination",
+    "build_project_recovery",
     "choose_project_matches",
     "extract_zip",
     "execute_project_command",
