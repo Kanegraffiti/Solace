@@ -75,3 +75,18 @@ def test_scripted_do_run_never_executes_project_code(temp_home: Path, monkeypatc
     launcher._handle_do("run storefront")
 
     assert "Scripted mode will not execute project code" in capsys.readouterr().out
+
+
+def test_scripted_training_never_imports_private_transcript(temp_home: Path, monkeypatch, capsys) -> None:
+    sys.modules.pop("solace.launcher", None)
+    launcher = importlib.import_module("solace.launcher")
+    monkeypatch.setattr(launcher.core, "PROMPT_DEFAULTS_ONLY", True)
+    monkeypatch.setattr(
+        launcher,
+        "read_transcript",
+        lambda *args: (_ for _ in ()).throw(AssertionError("must not read transcript")),
+    )
+
+    launcher._handle_train("chat private.txt")
+
+    assert "require interactive local review" in capsys.readouterr().out

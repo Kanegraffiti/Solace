@@ -384,6 +384,8 @@ I finished the first deployment today
 | `/file undo` | Undo the latest supported Solace file mutation. |
 | `/do inspect <project>` | Find a folder/ZIP, safely extract it, detect its stack, and suggest launch commands. |
 | `/do run <project>` | Inspect a project, then explicitly approve or skip every suggested command before execution. |
+| `/train chat [file.txt]` | Review and encrypt one speaker's messages from a local WhatsApp/text transcript. |
+| `/train status` | List locally stored voice-training profiles. |
 | `/qwen <prompt>` | Start local Qwen with an initial prompt. |
 | `/qwen` | Open interactive local Qwen. |
 | `/qwen status` | Check whether the local Qwen runtime/model are ready. |

@@ -30,6 +30,7 @@ from rich.prompt import Confirm, Prompt  # noqa: E402
 from rich.table import Table  # noqa: E402
 
 import main as core  # noqa: E402
+from solace.configuration import get_cipher, get_storage_path  # noqa: E402
 from solace.excel_skill import (  # noqa: E402
     answer_excel_query,
     create_chart,
@@ -60,6 +61,15 @@ from solace.user_manual import (  # noqa: E402
     MANUAL_TEXT,
     set_startup_manual,
     startup_manual_enabled,
+)
+from solace.voice_training import (  # noqa: E402
+    VoiceTrainingError,
+    make_summary,
+    parse_transcript,
+    participants,
+    read_transcript,
+    save_voice_dataset,
+    selected_reviews,
 )
 
 FILE_MANAGER = FileManager()
@@ -478,6 +488,169 @@ def _handle_do(args: str) -> None:
         core.console.print(Panel(str(exc), title="Project task stopped", border_style="red"))
 
 
+def _train_usage() -> None:
+    table = Table(title="Local conversation training")
+    table.add_column("Command")
+    table.add_column("Purpose")
+    table.add_row("/train chat", "Choose and privately review a WhatsApp/text transcript")
+    table.add_row("/train chat <file.txt>", "Import one specific transcript")
+    table.add_row("/train status", "List locally stored voice-training profiles")
+    core.console.print(table)
+    core.console.print("[dim]The original transcript is never changed or copied into Solace.[/]")
+
+
+def _training_source(value: str) -> Optional[Path]:
+    requested = value.strip().strip("\"'")
+    if not requested:
+        if core.PROMPT_DEFAULTS_ONLY:
+            core.console.print("[yellow]Provide a .txt transcript path in scripted mode.[/]")
+            return None
+        requested = Prompt.ask("Path or filename of the WhatsApp/text export").strip()
+    matches = [path for path in FILE_MANAGER.find(requested, limit=25) if path.suffix.casefold() == ".txt"]
+    if not matches:
+        core.console.print("[yellow]I couldn't find a .txt transcript matching that name or path.[/]")
+        return None
+    if len(matches) == 1:
+        return matches[0]
+    _show_file_paths(matches, "Possible conversation transcripts")
+    choice = Prompt.ask("Choose a number or type cancel").strip().lower()
+    if choice in {"cancel", "c", "quit", "exit"}:
+        return None
+    if choice.isdigit() and 1 <= int(choice) <= len(matches):
+        return matches[int(choice) - 1]
+    core.console.print("[red]Invalid selection.[/]")
+    return None
+
+
+def _review_voice_messages(reviews):
+    approved = []
+    removed = 0
+    flagged = [review for review in reviews if review.flags]
+    clean = [review for review in reviews if not review.flags]
+    approved.extend(review.cleaned for review in clean if review.cleaned)
+    core.console.print(
+        "[cyan]Privacy scan:[/] {} clean messages; {} need review.".format(len(clean), len(flagged))
+    )
+    core.console.print(
+        "[yellow]Automatic scanning cannot recognise every name, private story, nickname or context-specific insult. "
+        "Only approve the final dataset if this assisted review is sufficient for your export.[/]"
+    )
+    for index, review in enumerate(flagged, start=1):
+        changed = review.cleaned != review.original
+        body = "Flags: {}\n\nOriginal:\n{}".format(", ".join(review.flags), review.original)
+        if changed:
+            body += "\n\nAutomatically redacted:\n{}".format(review.cleaned)
+        core.console.print(Panel(body, title="Review {} of {}".format(index, len(flagged)), border_style="yellow"))
+        default = "redacted" if changed else "remove"
+        action = Prompt.ask(
+            "Decision",
+            choices=["remove", "redacted", "keep", "edit", "cancel"],
+            default=default,
+        )
+        if action == "cancel":
+            raise VoiceTrainingError("Import cancelled. No training data was saved.")
+        if action == "remove":
+            removed += 1
+        elif action == "redacted":
+            if not changed:
+                removed += 1
+            else:
+                approved.append(review.cleaned)
+        elif action == "keep":
+            approved.append(review.original)
+        else:
+            edited = Prompt.ask("Type the safe replacement text").strip()
+            if edited:
+                approved.append(edited)
+            else:
+                removed += 1
+    return approved, removed
+
+
+def _train_status() -> None:
+    root = get_storage_path(core.CONFIG, "training") / "voice"
+    profiles = sorted(path for path in root.glob("*") if path.is_dir()) if root.exists() else []
+    if not profiles:
+        core.console.print("[yellow]No approved voice-training profiles yet.[/]")
+        return
+    table = Table(title="Local voice-training profiles")
+    table.add_column("Profile")
+    table.add_column("Encrypted examples")
+    for profile in profiles:
+        state = "yes" if (profile / "approved_examples.enc").is_file() else "missing"
+        table.add_row(profile.name, state)
+    core.console.print(table)
+
+
+def _handle_train(args: str) -> None:
+    action, _, remainder = args.strip().partition(" ")
+    if action.casefold() == "status":
+        _train_status()
+        return
+    if action.casefold() != "chat":
+        _train_usage()
+        return
+    if core.PROMPT_DEFAULTS_ONLY:
+        core.console.print("[yellow]Conversation imports require interactive local review.[/]")
+        return
+    try:
+        source = _training_source(remainder)
+        if source is None:
+            return
+        FILE_MANAGER.assert_allowed(source)
+        messages = parse_transcript(read_transcript(source))
+        people = participants(messages)
+        table = Table(title="Whose voice should Solace learn?")
+        table.add_column("#", justify="right")
+        table.add_column("Speaker")
+        table.add_column("Messages", justify="right")
+        for index, (speaker, count) in enumerate(people, start=1):
+            table.add_row(str(index), speaker, str(count))
+        core.console.print(table)
+        choice = Prompt.ask("Choose the speaker number or type cancel").strip().lower()
+        if choice in {"cancel", "c", "quit", "exit"}:
+            return
+        if not choice.isdigit() or not 1 <= int(choice) <= len(people):
+            raise VoiceTrainingError("Invalid speaker selection.")
+        speaker = people[int(choice) - 1][0]
+        profile = Prompt.ask("Voice profile name", default=speaker).strip()
+        reviews = selected_reviews(messages, speaker)
+        approved, removed = _review_voice_messages(reviews)
+        core.console.print(
+            Panel(
+                "Source messages: {}\nSelected speaker: {}\nApproved: {}\nRemoved: {}\n"
+                "Other speakers' messages will not be stored.\n"
+                "The profile name and aggregate report are readable; approved message text is encrypted.".format(
+                    len(messages), speaker, len(approved), removed
+                ),
+                title="Final local training preview",
+            )
+        )
+        if not Confirm.ask("Encrypt and save this approved dataset?", default=False):
+            core.console.print("[yellow]Stopped. No training data was saved.[/]")
+            return
+        summary = make_summary(profile, reviews, approved, removed, len(messages))
+        destination = save_voice_dataset(
+            get_storage_path(core.CONFIG, "training"),
+            profile,
+            approved,
+            summary,
+            get_cipher(core.CONFIG),
+        )
+        core.console.print(
+            Panel(
+                "Encrypted approved examples saved under:\n{}\n\nThe original transcript was not modified.".format(
+                    destination
+                ),
+                title="Voice training saved",
+                border_style="green",
+            )
+        )
+        core._log_event("train", "chat profile {}".format(profile)[:80])
+    except (OSError, PermissionError, ValueError, VoiceTrainingError) as exc:
+        core.console.print(Panel(str(exc), title="Conversation training stopped", border_style="red"))
+
+
 def _excel_usage() -> None:
     table = Table(title="Excel skill")
     table.add_column("Command")
@@ -643,6 +816,8 @@ def _extended_help(_: str) -> None:
     table.add_row("/file undo", "Undo the latest supported file operation")
     table.add_row("/do inspect <project>", "Find/extract a project, detect its stack, and prepare launch steps")
     table.add_row("/do run <project>", "Inspect, then approve or skip each detected project command")
+    table.add_row("/train chat [file.txt]", "Privately review and encrypt a local conversation dataset")
+    table.add_row("/train status", "List local voice-training profiles")
     table.add_row("/manual", "Show the tiny startup manual now")
     table.add_row("/manual off", "Hide the manual on future starts")
     table.add_row("/manual on", "Restore the manual on future starts")
@@ -658,6 +833,7 @@ def _register_extensions() -> None:
     core.COMMANDS["excel"] = _handle_excel
     core.COMMANDS["file"] = _handle_file
     core.COMMANDS["do"] = _handle_do
+    core.COMMANDS["train"] = _handle_train
 
 
 def _is_scripted(argv: Sequence[str]) -> bool:
