@@ -1,12 +1,17 @@
+import io
 import stat
-import subprocess
+import sys
+import time
 import zipfile
 from pathlib import Path
 
 import pytest
 
 from solace.project_task import (
+    ProjectCommand,
+    ProjectCommandResult,
     ProjectTaskError,
+    build_project_recovery,
     choose_project_matches,
     execute_project_command,
     extract_zip,
@@ -131,15 +136,102 @@ def test_project_command_runs_without_a_shell(tmp_path: Path, monkeypatch) -> No
     )
     inspection = inspect_project(tmp_path)
     prepared = prepare_project_command("npm run dev", inspection)
-    calls = []
+    prepared = ProjectCommand(prepared.command, [sys.executable, "-c", "print('ready')"], prepared.risk)
+    streamed = []
+    result = execute_project_command(prepared, tmp_path, output=streamed.append)
 
-    def fake_run(argv, **kwargs):
-        calls.append((argv, kwargs))
-        return subprocess.CompletedProcess(argv, 0)
+    assert result.returncode == 0
+    assert "ready" in "".join(streamed)
+    assert "ready" in result.combined_output
 
-    monkeypatch.setattr("solace.project_task.subprocess.run", fake_run)
 
-    assert execute_project_command(prepared, tmp_path) == 0
-    assert calls[0][0] == ["npm", "run", "dev"]
-    assert calls[0][1]["cwd"] == str(tmp_path.resolve())
-    assert calls[0][1]["shell"] is False
+def test_failed_project_command_is_bounded_and_diagnosed(tmp_path: Path) -> None:
+    (tmp_path / "package.json").write_text('{"scripts":{"dev":"vite"}}', encoding="utf-8")
+    inspection = inspect_project(tmp_path)
+    prepared = prepare_project_command("npm run dev", inspection)
+
+    prepared = ProjectCommand(
+        prepared.command,
+        [sys.executable, "-c", "import sys; print('x' * 20000); sys.exit(127)"],
+        prepared.risk,
+    )
+    execution = execute_project_command(prepared, tmp_path, max_capture_bytes=512)
+    recovery = build_project_recovery(execution)
+
+    assert execution.returncode == 127
+    assert execution.output_truncated is True
+    assert "earlier output omitted" in execution.combined_output
+    assert len(execution.stdout.encode("utf-8")) <= 550
+    assert recovery.diagnosis is None
+    assert recovery.retry_check.syntax_valid is True
+
+
+def test_project_output_streams_before_long_running_command_exits(tmp_path: Path) -> None:
+    prepared = ProjectCommand(
+        "python server.py",
+        [
+            sys.executable,
+            "-u",
+            "-c",
+            "import time; print('server ready', flush=True); time.sleep(0.3)",
+        ],
+        "High",
+    )
+    first_output = []
+    started = time.monotonic()
+
+    def observe(text: str) -> None:
+        if not first_output:
+            first_output.append(time.monotonic())
+
+    result = execute_project_command(prepared, tmp_path, output=observe)
+    finished = time.monotonic()
+
+    assert result.returncode == 0
+    assert first_output[0] - started < 0.2
+    assert finished - first_output[0] >= 0.2
+
+
+def test_project_diagnosis_combines_stdout_and_stderr(tmp_path: Path) -> None:
+    (tmp_path / "package.json").write_text('{"scripts":{"dev":"vite"}}', encoding="utf-8")
+    inspection = inspect_project(tmp_path)
+    prepared = prepare_project_command("npm run dev", inspection)
+    result = ProjectCommandResult(
+        prepared,
+        1,
+        "npm: command not found",
+        "warning: cache unavailable",
+        False,
+    )
+
+    recovery = build_project_recovery(result)
+
+    assert recovery.diagnosis is not None
+    assert "executable is not on PATH" in recovery.diagnosis
+
+
+def test_interrupted_project_command_returns_130(tmp_path: Path, monkeypatch) -> None:
+    (tmp_path / "package.json").write_text('{"scripts":{"dev":"vite"}}', encoding="utf-8")
+    inspection = inspect_project(tmp_path)
+    prepared = prepare_project_command("npm run dev", inspection)
+
+    class InterruptedProcess:
+        stdout = io.BytesIO(b"")
+
+        def wait(self, timeout=None):
+            if timeout == 2:
+                return -15
+            raise KeyboardInterrupt
+
+        def terminate(self):
+            return None
+
+        def kill(self):
+            return None
+
+    monkeypatch.setattr("solace.project_task.subprocess.Popen", lambda *args, **kwargs: InterruptedProcess())
+
+    result = execute_project_command(prepared, tmp_path)
+
+    assert result.returncode == 130
+    assert result.combined_output == "Interrupted by user."

@@ -2,19 +2,24 @@
 
 from __future__ import annotations
 
+import codecs
 import json
 import re
 import shlex
 import stat
 import subprocess
+import threading
 import zipfile
 from dataclasses import dataclass
 from pathlib import Path, PurePosixPath
-from typing import Dict, List, Sequence
+from typing import Callable, Dict, List, Optional, Sequence
+
+from solace.logic import bash_intel
 
 MAX_ARCHIVE_MEMBERS = 10_000
 MAX_ARCHIVE_BYTES = 1024 * 1024 * 1024
 COMMAND_TIMEOUT_SECONDS = 15 * 60
+MAX_CAPTURE_BYTES = 16_000
 ALLOWED_PROJECT_COMMANDS = {
     "cargo",
     "composer",
@@ -46,6 +51,51 @@ class ProjectCommand:
     command: str
     argv: Sequence[str]
     risk: str
+
+
+@dataclass(frozen=True)
+class ProjectCommandResult:
+    command: ProjectCommand
+    returncode: int
+    stdout: str
+    stderr: str
+    output_truncated: bool
+
+    @property
+    def combined_output(self) -> str:
+        return "\n".join(part for part in (self.stdout, self.stderr) if part).strip()
+
+
+@dataclass(frozen=True)
+class ProjectRecovery:
+    diagnosis: Optional[str]
+    retry_check: bash_intel.BashCheckResult
+
+
+class _BoundedTail:
+    """Retain only the newest bytes while a child process is still running."""
+
+    def __init__(self, limit: int) -> None:
+        self.limit = limit
+        self.data = bytearray()
+        self.truncated = False
+
+    def append(self, chunk: bytes) -> None:
+        if len(chunk) >= self.limit:
+            self.data[:] = chunk[-self.limit :]
+            self.truncated = True
+            return
+        overflow = len(self.data) + len(chunk) - self.limit
+        if overflow > 0:
+            del self.data[:overflow]
+            self.truncated = True
+        self.data.extend(chunk)
+
+    def text(self) -> str:
+        value = bytes(self.data).decode("utf-8", errors="replace")
+        if self.truncated:
+            return "[earlier output omitted]\n" + value
+        return value
 
 
 def project_query(request: str) -> str:
@@ -271,34 +321,123 @@ def prepare_project_command(command: str, inspection: ProjectInspection) -> Proj
     return ProjectCommand(command, argv, risk)
 
 
-def execute_project_command(command: ProjectCommand, root: Path) -> int:
-    """Run one approved project command directly in its project directory."""
+def execute_project_command(
+    command: ProjectCommand,
+    root: Path,
+    *,
+    output: Optional[Callable[[str], None]] = None,
+    timeout: float = COMMAND_TIMEOUT_SECONDS,
+    max_capture_bytes: int = MAX_CAPTURE_BYTES,
+) -> ProjectCommandResult:
+    """Run one approved command, stream it live, and retain a bounded tail."""
 
+    if max_capture_bytes <= 0:
+        raise ValueError("Capture limit must be greater than zero.")
     project_root = root.resolve()
     if not project_root.is_dir():
         raise ProjectTaskError("The inspected project directory no longer exists.")
     try:
-        completed = subprocess.run(
+        process = subprocess.Popen(
             list(command.argv),
             cwd=str(project_root),
-            check=False,
             shell=False,
-            timeout=COMMAND_TIMEOUT_SECONDS,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            bufsize=0,
         )
-    except FileNotFoundError as exc:
-        raise ProjectTaskError("Required command is not installed: {}".format(command.argv[0])) from exc
+    except FileNotFoundError:
+        return ProjectCommandResult(
+            command,
+            127,
+            "",
+            "{}: command not found".format(command.argv[0]),
+            False,
+        )
+    if process.stdout is None:  # pragma: no cover - defensive subprocess contract
+        process.kill()
+        raise ProjectTaskError("Project command output stream was unavailable.")
+    stream = process.stdout
+
+    tail = _BoundedTail(max_capture_bytes)
+    callback_errors: List[BaseException] = []
+
+    def read_output() -> None:
+        decoder = codecs.getincrementaldecoder("utf-8")(errors="replace")
+        output_failed = False
+        try:
+            while True:
+                chunk = stream.read(4096)
+                if not chunk:
+                    break
+                tail.append(chunk)
+                if output is not None and not output_failed:
+                    rendered = decoder.decode(chunk)
+                    if rendered:
+                        try:
+                            output(rendered)
+                        except BaseException as exc:
+                            callback_errors.append(exc)
+                            output_failed = True
+            if output is not None and not output_failed:
+                rendered = decoder.decode(b"", final=True)
+                if rendered:
+                    try:
+                        output(rendered)
+                    except BaseException as exc:
+                        callback_errors.append(exc)
+        except BaseException as exc:  # keep reader failures visible to the caller
+            callback_errors.append(exc)
+
+    reader = threading.Thread(target=read_output, name="solace-project-output", daemon=True)
+    reader.start()
+    interrupted = False
+    try:
+        returncode = process.wait(timeout=timeout)
     except subprocess.TimeoutExpired as exc:
+        process.kill()
+        process.wait()
+        reader.join()
         raise ProjectTaskError("Project command stopped after the 15-minute safety timeout.") from exc
     except KeyboardInterrupt:
-        return 130
-    return completed.returncode
+        interrupted = True
+        process.terminate()
+        try:
+            process.wait(timeout=2)
+        except subprocess.TimeoutExpired:
+            process.kill()
+            process.wait()
+        returncode = 130
+    finally:
+        reader.join()
+        stream.close()
+
+    if callback_errors:
+        raise ProjectTaskError("Project output could not be displayed safely.") from callback_errors[0]
+    captured = tail.text()
+    if interrupted and not captured:
+        captured = "Interrupted by user."
+    return ProjectCommandResult(command, returncode, captured, "", tail.truncated)
+
+
+def build_project_recovery(result: ProjectCommandResult) -> ProjectRecovery:
+    """Diagnose a failed command and validate its exact, allowlisted retry."""
+
+    if result.returncode == 0:
+        raise ValueError("Recovery is only available for failed project commands.")
+    evidence = result.combined_output
+    diagnosis = bash_intel.debug_bash_error(evidence) if evidence else None
+    retry_check = bash_intel.check_bash(result.command.command)
+    return ProjectRecovery(diagnosis=diagnosis, retry_check=retry_check)
 
 
 __all__ = [
     "ProjectInspection",
     "ProjectCommand",
+    "ProjectCommandResult",
+    "ProjectRecovery",
     "ProjectTaskError",
     "archive_destination",
+    "build_project_recovery",
     "choose_project_matches",
     "extract_zip",
     "execute_project_command",
