@@ -32,6 +32,7 @@ from solace.configuration import (
     update_alias,
     update_tone,
 )
+from solace.device_benchmark import run_device_benchmark
 from solace.logic import bash_intel, python_intel
 from solace.logic.companion import respond as companion_respond
 from solace.logic.converse import ConversationState
@@ -591,6 +592,7 @@ def _handle_help(_: str) -> None:
     table.add_row("/debug <error>", "Match common Bash errors to likely fixes")
     table.add_row("/explain [bash] <command>", "Explain Bash command tokens and flags")
     table.add_row("/bash check <command|path>", "Validate Bash syntax without executing it")
+    table.add_row("/bash benchmark device", "Run private, non-destructive Termux acceptance checks")
     table.add_row("/toolkit [status|list|man|run]", "Discover and use an installed Termux Toolkit")
     table.add_row("/mimic", "Generate a rule-based conversation reply")
     table.add_row("/listen", "Capture voice input when STT is enabled")
@@ -654,8 +656,27 @@ def _handle_explain(args: str) -> None:
 
 def _handle_bash(args: str) -> None:
     action, _, value = args.strip().partition(" ")
+    if action.lower() == "benchmark" and value.strip().lower() == "device":
+        try:
+            report = run_device_benchmark()
+        except (OSError, RuntimeError, ValueError) as exc:
+            console.print(f"[red]Device benchmark failed:[/] {exc}")
+            return
+        status = "[green]PASS[/]" if report.failed == 0 else "[red]FAIL[/]"
+        lines = [
+            f"Result: {status}",
+            f"Passed: {report.passed}",
+            f"Failed: {report.failed}",
+            f"Skipped: {report.skipped}",
+        ]
+        for item in report.cases:
+            lines.append(f"- {item.status.upper()}: {item.name} — {item.detail}")
+        lines.append(f"Private report: {report.report_path}")
+        lines.append("No filenames, command contents, or results were uploaded.")
+        console.print(Panel("\n".join(lines), title="Bash device benchmark"))
+        return
     if action.lower() != "check" or not value.strip():
-        console.print("[yellow]Usage: /bash check <command-or-script-path>[/]")
+        console.print("[yellow]Usage: /bash check <command-or-script-path> | /bash benchmark device[/]")
         return
     try:
         result = bash_intel.check_bash(value)
