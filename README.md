@@ -10,6 +10,11 @@ manager, encryption, and local Qwen integration do not require a hosted AI
 service. Qwen is used as an explanation/reasoning layer where useful; it does
 not receive unrestricted shell execution.
 
+> **Already installed?** Update Solace directly from the terminal with
+> `solace update`. The command safely fast-forwards from the canonical GitHub
+> repository, refreshes the application environment, and preserves your local
+> configuration and user data.
+
 ## What Solace does
 
 - **Journal and personal knowledge:** diary entries, notes, todos, quotes, tags,
@@ -94,6 +99,13 @@ Start Solace from anywhere:
 
 ```bash
 solace
+```
+
+Once installed, you do not need to enter the repository or manually run Git
+to receive new releases. From the normal CLI, simply use:
+
+```bash
+solace update
 ```
 
 ### Refresh an existing checkout
