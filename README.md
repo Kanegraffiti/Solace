@@ -397,6 +397,7 @@ I finished the first deployment today
 | `/debug <error>` | Match a common Bash error to likely fixes. |
 | `/explain [bash] <command>` | Break down Bash tokens, flags, pipes, and redirects. |
 | `/bash check <command-or-script-path>` | Validate Bash syntax and show safety warnings without executing it. |
+| `/bash benchmark device` | Run private, non-destructive Bash and Termux checks and save an anonymized local report. |
 | `/manual [on\|off\|status]` | Show/configure the startup mini-manual. |
 | `/mimic <text>` | Use the rule-based mimic responder. |
 | `/export [markdown\|pdf] [path]` | Export journal entries. |
