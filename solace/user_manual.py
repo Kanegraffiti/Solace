@@ -11,6 +11,7 @@ MANUAL_TEXT = """[bold]The tiny Solace manual[/bold]
 • Plain text → save a diary entry.
 • /chat <message> → talk with Solace's local memory/knowledge companion.
 • /qwen <prompt> → ask the local Qwen coder model; /qwen alone opens Qwen chat.
+• /assist <request> → use deterministic tools first, then optional offline AI according to your policy.
 • /excel <question> → formulas, PivotTables, charts and workbook tools.
 • /file <request> → safely find, copy, move, rename, trash and restore files.
 • /do inspect <project> → find/extract a project and identify how to run it.
