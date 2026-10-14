@@ -398,6 +398,8 @@ I finished the first deployment today
 | `/do run <project>` | Inspect a project, then explicitly approve or skip every suggested command before execution. |
 | `/train chat [file.txt]` | Review and encrypt one speaker's messages from a local WhatsApp/text transcript. |
 | `/train status` | List locally stored voice-training profiles. |
+| `/grammar <text>` | Correct common English grammar locally and explain each change. |
+| `/grammar file <path.txt>` | Create a corrected `.txt` or `.md` copy without overwriting the original. |
 | `/qwen <prompt>` | Start local Qwen with an initial prompt. |
 | `/qwen` | Open interactive local Qwen. |
 | `/qwen status` | Check whether the local Qwen runtime/model are ready. |

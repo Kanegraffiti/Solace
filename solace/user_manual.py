@@ -16,6 +16,7 @@ MANUAL_TEXT = """[bold]The tiny Solace manual[/bold]
 • /do inspect <project> → find/extract a project and identify how to run it.
 • /do run <project> → inspect, confirm each command, and diagnose failures before an approved retry.
 • /train chat [file.txt] → clean, review and encrypt a local conversation dataset.
+• /grammar <text> → correct English locally and explain every change.
 • /search <query> → find journal memories.
 • /code bash <topic> → get a deterministic Bash recipe.
 • /help → see every Solace command.
