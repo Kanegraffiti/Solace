@@ -68,6 +68,22 @@ def test_update_fast_forwards_and_preserves_user_data(tmp_path, monkeypatch):
     assert config.read_text(encoding="utf-8") == "private config"
 
 
+def test_failed_refresh_recommends_config_preserving_recovery(tmp_path, monkeypatch):
+    project = tmp_path / "Solace"
+    (project / ".git").mkdir(parents=True)
+    (project / "install.sh").write_text("#!/usr/bin/env bash\n", encoding="utf-8")
+    _mock_git(monkeypatch, _git_responses())
+    monkeypatch.setattr(updater.shutil, "which", lambda command: f"/usr/bin/{command}")
+    monkeypatch.setattr(
+        updater.subprocess,
+        "run",
+        lambda args, **kwargs: _completed(returncode=1),
+    )
+
+    with pytest.raises(updater.UpdateError, match="bash install.sh --preserve-config"):
+        updater.update_solace(project)
+
+
 def test_update_does_nothing_when_current(tmp_path, monkeypatch):
     project = tmp_path / "Solace"
     (project / ".git").mkdir(parents=True)
