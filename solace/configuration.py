@@ -93,6 +93,9 @@ DEFAULT_CONFIG: Dict[str, Any] = {
         "fallback_mode": "apologise",
         "autosave": True,
     },
+    "assistant": {
+        "ai_policy": "off",
+    },
 }
 
 
