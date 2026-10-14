@@ -28,6 +28,18 @@ def test_environment_overrides_are_applied(temp_home):
     assert settings.max_tokens == 128
 
 
+def test_generic_model_override_takes_precedence(temp_home):
+    module = _load_local_llm()
+    settings = module.settings_from_environment(
+        {
+            "SOLACE_LLAMA_MODEL": str(temp_home / "generic.gguf"),
+            "SOLACE_QWEN_MODEL": str(temp_home / "qwen.gguf"),
+        }
+    )
+
+    assert settings.model == temp_home / "generic.gguf"
+
+
 def test_build_command_keeps_prompt_as_single_argument(temp_home):
     module = _load_local_llm()
     settings = module.QwenSettings(
