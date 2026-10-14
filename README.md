@@ -30,6 +30,9 @@ not receive unrestricted shell execution.
   trash, restore, inspect history, and undo supported file operations.
 - **Optional local Qwen:** Qwen2.5-Coder-1.5B-Instruct Q4_K_M through llama.cpp
   with `/qwen` or the standalone `qwen` command.
+- **Deterministic-first assistant:** `/assist` routes requests to inspectable local
+  tools first. Optional GGUF models run offline through llama.cpp only when the
+  configured `off`, `ask`, or `auto` policy permits it.
 - **Privacy controls:** journal content is encrypted at rest by default, with an
   optional startup password.
 - **Export, backup, and sync:** Markdown/PDF export, local backups, and optional
@@ -344,8 +347,15 @@ export SOLACE_QWEN_CONTEXT=1024
 export SOLACE_QWEN_THREADS=2
 export SOLACE_QWEN_TOKENS=256
 export SOLACE_LLAMA_CLI="$HOME/other-llama/build/bin/llama-cli"
+export SOLACE_LLAMA_MODEL="$HOME/models/another-compatible-model.gguf"
 export SOLACE_QWEN_MODEL="$HOME/models/another-model.gguf"
 ```
+
+`SOLACE_LLAMA_MODEL` accepts any GGUF model supported by the installed
+`llama-cli` and takes precedence over the older `SOLACE_QWEN_MODEL` variable.
+This lets `/assist` use a device-appropriate open model while keeping existing
+Qwen installations fully compatible. Solace never downloads or selects a new
+model implicitly.
 
 Use directly:
 
@@ -389,6 +399,9 @@ I finished the first deployment today
 | `/search <query>` | Search journal text, tags, and dates. |
 | `/summarize [week\|month]` | Show recent extractive recaps. |
 | `/chat <message>` | Talk with the deterministic local memory companion. |
+| `/assist <request>` | Route work to deterministic skills before considering offline local AI. |
+| `/assist ai <off\|ask\|auto>` | Control local-model use; the default is `off`. |
+| `/assist status` | Show the current AI policy and local-model readiness. |
 | `/excel <question>` | Excel formulas, errors, PivotTables, charts and workbook tools. |
 | `/excel functions [term]` | Search the local Excel function-name index. |
 | `/file <request>` | Safely find/copy/move/rename/trash/restore user files. |
