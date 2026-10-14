@@ -32,9 +32,9 @@ def test_termux_core_requirements_skip_optional_native_stacks():
 def test_termux_installer_sets_up_pip_before_cryptography():
     installer = (Path(__file__).resolve().parents[1] / "install.sh").read_text(encoding="utf-8")
 
-    pip_install = installer.index("termux_pkg_install python-pip")
+    pip_install = installer.index("ensure_termux_package python-pip")
     pip3_check = installer.index("command -v pip3")
-    crypto_install = installer.index("termux_pkg_install python-cryptography")
+    crypto_install = installer.index("ensure_termux_package python-cryptography")
 
     assert pip_install < pip3_check < crypto_install
 
@@ -57,6 +57,16 @@ def test_termux_installer_avoids_full_mirror_sweep():
     assert "TERMUX_PKG_NO_MIRROR_SELECT=1 pkg install" in installer
     assert "TERMUX_PKG_NO_MIRROR_SELECT=1 pkg reinstall" in installer
     assert "termux-change-repo" in installer
+
+
+def test_termux_installer_skips_repository_when_required_packages_exist():
+    installer = (Path(__file__).resolve().parents[1] / "install.sh").read_text(encoding="utf-8")
+
+    assert "termux_pkg_installed" in installer
+    assert "dpkg-query -W -f='${Status}'" in installer
+    assert 'if termux_pkg_installed "$package"' in installer
+    assert "skipping repository download" in installer
+    assert "bash install.sh --preserve-config" in installer
 
 
 def test_termux_installer_uses_file_based_crypto_compatibility_check():
