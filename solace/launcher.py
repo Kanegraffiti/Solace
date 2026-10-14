@@ -7,6 +7,7 @@ Installers point the ``solace`` command here.
 
 from __future__ import annotations
 
+import shlex
 import sys
 from pathlib import Path
 from typing import Dict, Optional, Sequence
@@ -25,12 +26,14 @@ from solace.termux_compat import ensure_termux_cryptography_compatible  # noqa: 
 # only if Android still refuses the import. This is a no-op outside Termux.
 ensure_termux_cryptography_compatible()
 
+from rich.markup import escape  # noqa: E402
 from rich.panel import Panel  # noqa: E402
 from rich.prompt import Confirm, Prompt  # noqa: E402
 from rich.table import Table  # noqa: E402
 
 import main as core  # noqa: E402
 from solace.configuration import get_cipher, get_storage_path  # noqa: E402
+from solace.english_editor import edit_english, edit_english_file  # noqa: E402
 from solace.excel_skill import (  # noqa: E402
     answer_excel_query,
     create_chart,
@@ -132,6 +135,67 @@ def _handle_qwen(args: str) -> None:
 
     if prompt:
         core._log_event("qwen", prompt[:80])
+
+
+def _grammar_summary(corrected: str, edits) -> str:
+    lines = [escape(corrected)]
+    if not edits:
+        lines.append("\n[green]No supported grammar corrections were needed.[/]")
+        return "\n".join(lines)
+
+    lines.append("\n[bold]Changes[/bold]")
+    for edit in edits[:12]:
+        lines.append(f"- [red]{escape(edit.before)}[/] → [green]{escape(edit.after)}[/]: {edit.reason}")
+    if len(edits) > 12:
+        lines.append(f"- …and {len(edits) - 12} more correction(s).")
+    return "\n".join(lines)
+
+
+def _handle_grammar(args: str) -> None:
+    request = args.strip()
+    if not request:
+        core.console.print("[yellow]Usage: /grammar <English text> | /grammar file <path.txt>[/]")
+        return
+
+    if request.casefold().startswith("file "):
+        try:
+            parts = shlex.split(request)
+        except ValueError as exc:
+            core.console.print(f"[red]Invalid grammar file path:[/] {exc}")
+            return
+        if len(parts) != 2:
+            core.console.print("[yellow]Usage: /grammar file <path.txt>[/]")
+            return
+        try:
+            file_result = edit_english_file(Path(parts[1]))
+        except (FileExistsError, FileNotFoundError, OSError, ValueError) as exc:
+            core.console.print(Panel(str(exc), title="Grammar edit stopped", border_style="red"))
+            return
+        core.console.print(
+            Panel(
+                _grammar_summary(file_result.result.corrected, file_result.result.edits)
+                + f"\n\n[bold]Edited copy:[/] {escape(str(file_result.output))}\n"
+                + "The original file was not changed.",
+                title="English grammar editor",
+                border_style="green",
+            )
+        )
+        core._log_event("grammar", "edited local text file")
+        return
+
+    try:
+        result = edit_english(request)
+    except ValueError as exc:
+        core.console.print(Panel(str(exc), title="Grammar edit stopped", border_style="red"))
+        return
+    core.console.print(
+        Panel(
+            _grammar_summary(result.corrected, result.edits),
+            title="English grammar editor",
+            border_style="green",
+        )
+    )
+    core._log_event("grammar", f"{len(result.edits)} local correction(s)")
 
 
 def _show_file_paths(paths: Sequence[Path], title: str, show_size: bool = False) -> None:
@@ -870,6 +934,8 @@ def _extended_help(_: str) -> None:
     table.add_row("/do run <project>", "Inspect, then approve or skip each detected project command")
     table.add_row("/train chat [file.txt]", "Privately review and encrypt a local conversation dataset")
     table.add_row("/train status", "List local voice-training profiles")
+    table.add_row("/grammar <text>", "Correct English locally and explain each change")
+    table.add_row("/grammar file <path>", "Create an edited copy without overwriting the original")
     table.add_row("/manual", "Show the tiny startup manual now")
     table.add_row("/manual off", "Hide the manual on future starts")
     table.add_row("/manual on", "Restore the manual on future starts")
@@ -886,6 +952,7 @@ def _register_extensions() -> None:
     core.COMMANDS["file"] = _handle_file
     core.COMMANDS["do"] = _handle_do
     core.COMMANDS["train"] = _handle_train
+    core.COMMANDS["grammar"] = _handle_grammar
 
 
 def _is_scripted(argv: Sequence[str]) -> bool:
