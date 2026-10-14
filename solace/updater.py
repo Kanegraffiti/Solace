@@ -112,7 +112,8 @@ def update_solace(project_root: Path) -> UpdateResult:
     if completed.returncode != 0:
         raise UpdateError(
             f"Solace code updated to {current[:12]}, but dependency/launcher refresh failed. "
-            "Your user data remains untouched; rerun `bash install.sh` after resolving the reported error."
+            "Your user data remains untouched; rerun `bash install.sh --preserve-config` after resolving "
+            "the reported error."
         )
 
     return UpdateResult(True, previous, current, list(PRESERVED_DATA))
