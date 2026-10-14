@@ -58,8 +58,23 @@ termux_pkg_install() {
     fi
 
     printf '\nTermux could not install %s from the configured repository.\n' "$package" >&2
-    printf 'Run `termux-change-repo`, choose a working main repository, then rerun `bash install.sh`.\n' >&2
+    printf 'Run `termux-change-repo`, choose a working main repository, then rerun `bash install.sh --preserve-config`.\n' >&2
     return 1
+}
+
+termux_pkg_installed() {
+    local package="$1"
+    command -v dpkg-query >/dev/null 2>&1 || return 1
+    [ "$(dpkg-query -W -f='${Status}' "$package" 2>/dev/null || true)" = "install ok installed" ]
+}
+
+ensure_termux_package() {
+    local package="$1"
+    if termux_pkg_installed "$package"; then
+        info "$package is already installed; skipping repository download"
+        return 0
+    fi
+    termux_pkg_install "$package"
 }
 
 termux_pkg_reinstall() {
@@ -70,7 +85,7 @@ termux_pkg_reinstall() {
     fi
 
     printf '\nTermux could not reinstall %s from the configured repository.\n' "$package" >&2
-    printf 'Run `termux-change-repo`, choose a working main repository, then rerun `bash install.sh`.\n' >&2
+    printf 'Run `termux-change-repo`, choose a working main repository, then rerun `bash install.sh --preserve-config`.\n' >&2
     return 1
 }
 
@@ -98,18 +113,15 @@ prepare_termux_python() {
     # python-cryptography's Termux package installs its target Python
     # dependencies during package configuration, so pip3 must exist first.
     info "Ensuring Termux's standalone python-pip package is installed"
-    termux_pkg_install python-pip
+    ensure_termux_package python-pip
 
     if ! command -v pip3 >/dev/null 2>&1 || ! "$PYTHON_BIN" -m pip --version >/dev/null 2>&1; then
         printf 'Termux python-pip installed but pip3 is still unavailable. Run `pkg reinstall python-pip` and retry.\n' >&2
         exit 1
     fi
 
-    info "Installing Termux's Android-patched python-cryptography package"
-    if ! termux_pkg_install python-cryptography; then
-        warn "python-cryptography did not configure cleanly; retrying after python-pip setup"
-        termux_pkg_reinstall python-cryptography
-    fi
+    info "Ensuring Termux's Android-patched python-cryptography package is installed"
+    ensure_termux_package python-cryptography
 
     # A previous python-cryptography install may have been marked installed even
     # though its post-install pip step failed while pip3 was absent. In that
@@ -166,7 +178,7 @@ install_python_dependencies() {
 
         if ! termux_cffi_ready "$VENV_DIR/bin/python"; then
             printf 'The Solace virtual environment cannot see Termux CFFI system packages.\n' >&2
-            printf 'Delete only `%s` and rerun `bash install.sh`; user data is stored outside the venv.\n' "$VENV_DIR" >&2
+            printf 'Delete only `%s` and rerun `bash install.sh --preserve-config`; user data is stored outside the venv.\n' "$VENV_DIR" >&2
             exit 1
         fi
 
