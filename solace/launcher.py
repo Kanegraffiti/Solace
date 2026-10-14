@@ -32,7 +32,8 @@ from rich.prompt import Confirm, Prompt  # noqa: E402
 from rich.table import Table  # noqa: E402
 
 import main as core  # noqa: E402
-from solace.configuration import get_cipher, get_storage_path  # noqa: E402
+from solace.assistant_router import route_request  # noqa: E402
+from solace.configuration import get_cipher, get_storage_path, save_config  # noqa: E402
 from solace.english_editor import edit_english, edit_english_file  # noqa: E402
 from solace.excel_skill import (  # noqa: E402
     answer_excel_query,
@@ -46,7 +47,7 @@ from solace.excel_skill import (  # noqa: E402
     set_formula,
 )
 from solace.file_skill import FileManager, human_size, parse_intent  # noqa: E402
-from solace.local_llm import run_qwen, runtime_status  # noqa: E402
+from solace.local_llm import run_local_model, run_qwen, runtime_status  # noqa: E402
 from solace.project_task import (  # noqa: E402
     ProjectInspection,
     ProjectTaskError,
@@ -135,6 +136,76 @@ def _handle_qwen(args: str) -> None:
 
     if prompt:
         core._log_event("qwen", prompt[:80])
+
+
+def _assistant_policy() -> str:
+    policy = str(core.CONFIG.get("assistant", {}).get("ai_policy", "off")).casefold()
+    return policy if policy in {"off", "ask", "auto"} else "off"
+
+
+def _handle_assist(args: str) -> None:
+    request = args.strip()
+    if request.casefold() == "status":
+        ready, message = runtime_status()
+        core.console.print(
+            Panel(
+                f"AI policy: [bold]{_assistant_policy()}[/bold]\n{escape(message)}",
+                title="Assistant status",
+                border_style="green" if ready else "yellow",
+            )
+        )
+        return
+    if request.casefold().startswith("ai "):
+        policy = request.split(None, 1)[1].casefold()
+        if policy not in {"off", "ask", "auto"}:
+            core.console.print("[yellow]Usage: /assist ai <off|ask|auto>[/]")
+            return
+        core.CONFIG.setdefault("assistant", {})["ai_policy"] = policy
+        save_config(core.CONFIG)
+        core.console.print(f"[green]Assistant AI policy set to {policy}.[/]")
+        return
+    try:
+        decision = route_request(request)
+    except ValueError as exc:
+        core.console.print(f"[yellow]{exc}[/]")
+        return
+
+    if decision.kind == "deterministic" and decision.command:
+        core.console.print(f"[dim]Deterministic · {decision.reason}[/]")
+        handler = core.COMMANDS.get(decision.command)
+        if handler is None:
+            core.console.print("[red]That local capability is not registered.[/]")
+            return
+        handler(decision.arguments)
+        return
+
+    policy = _assistant_policy()
+    if policy == "off":
+        core.console.print(
+            Panel(
+                "No confident deterministic skill matched. Local AI is off, so Solace did not guess.\n\n"
+                "Use /assist ai ask to approve model use each time, or /assist ai auto to allow it automatically.",
+                title="Unavailable without local AI",
+                border_style="yellow",
+            )
+        )
+        return
+    ready, message = runtime_status()
+    if not ready:
+        core.console.print(Panel(message, title="Local model unavailable", border_style="yellow"))
+        return
+    if policy == "ask":
+        if core.PROMPT_DEFAULTS_ONLY:
+            core.console.print("[yellow]Local-model approval is required; scripted mode will not assume consent.[/]")
+            return
+        if not Confirm.ask("No deterministic skill matched. Ask the offline local model?", default=False):
+            core.console.print("[yellow]Local model was not used.[/]")
+            return
+    core.console.print("[dim]Local model · llama.cpp (offline)[/]")
+    try:
+        run_local_model(decision.arguments, interactive=False)
+    except (OSError, RuntimeError, ValueError) as exc:
+        core.console.print(Panel(str(exc), title="Local model error", border_style="red"))
 
 
 def _grammar_summary(corrected: str, edits) -> str:
@@ -926,6 +997,9 @@ def _extended_help(_: str) -> None:
     table.add_row("/qwen <prompt>", "Open the local Qwen coder with an initial prompt")
     table.add_row("/qwen", "Open an interactive local Qwen chat")
     table.add_row("/qwen status", "Check the llama.cpp runtime and Qwen model paths")
+    table.add_row("/assist <request>", "Route a request to a deterministic skill before optional local AI")
+    table.add_row("/assist ai <off|ask|auto>", "Control whether the assistant may use a local model")
+    table.add_row("/assist status", "Show assistant policy and local-model readiness")
     table.add_row("/excel <question>", "Excel formulas, PivotTables, charts, errors and workbook tools")
     table.add_row("/file <request>", "Safely find/copy/move/rename/trash/restore user files")
     table.add_row("/file history", "Show file operations performed by Solace")
@@ -953,6 +1027,7 @@ def _register_extensions() -> None:
     core.COMMANDS["do"] = _handle_do
     core.COMMANDS["train"] = _handle_train
     core.COMMANDS["grammar"] = _handle_grammar
+    core.COMMANDS["assist"] = _handle_assist
 
 
 def _is_scripted(argv: Sequence[str]) -> bool:

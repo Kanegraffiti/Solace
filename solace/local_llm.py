@@ -24,8 +24,8 @@ DEFAULT_QWEN_MODEL = (
 
 
 @dataclass(frozen=True)
-class QwenSettings:
-    """Runtime settings for the phone-friendly local Qwen backend."""
+class LocalModelSettings:
+    """Runtime settings for a llama.cpp-compatible local GGUF model."""
 
     llama_cli: Path = DEFAULT_LLAMA_CLI
     model: Path = DEFAULT_QWEN_MODEL
@@ -42,21 +42,25 @@ def _positive_int(value: Optional[str], default: int) -> int:
     return parsed if parsed > 0 else default
 
 
-def settings_from_environment(env: Optional[Mapping[str, str]] = None) -> QwenSettings:
+QwenSettings = LocalModelSettings
+
+
+def settings_from_environment(env: Optional[Mapping[str, str]] = None) -> LocalModelSettings:
     """Build settings from environment overrides and safe mobile defaults."""
 
     values = os.environ if env is None else env
-    return QwenSettings(
+    model_path = values.get("SOLACE_LLAMA_MODEL") or values.get("SOLACE_QWEN_MODEL")
+    return LocalModelSettings(
         llama_cli=Path(values.get("SOLACE_LLAMA_CLI", str(DEFAULT_LLAMA_CLI))).expanduser(),
-        model=Path(values.get("SOLACE_QWEN_MODEL", str(DEFAULT_QWEN_MODEL))).expanduser(),
+        model=Path(model_path or str(DEFAULT_QWEN_MODEL)).expanduser(),
         context=_positive_int(values.get("SOLACE_QWEN_CONTEXT"), 2048),
         threads=_positive_int(values.get("SOLACE_QWEN_THREADS"), 4),
         max_tokens=_positive_int(values.get("SOLACE_QWEN_TOKENS"), 512),
     )
 
 
-def runtime_status(settings: Optional[QwenSettings] = None) -> tuple[bool, str]:
-    """Return whether Qwen is ready plus a human-readable status message."""
+def runtime_status(settings: Optional[LocalModelSettings] = None) -> tuple[bool, str]:
+    """Return whether the configured local model is ready."""
 
     cfg = settings or settings_from_environment()
     missing: list[str] = []
@@ -71,14 +75,14 @@ def runtime_status(settings: Optional[QwenSettings] = None) -> tuple[bool, str]:
         detail = "\n".join(f"- {item}" for item in missing)
         return (
             False,
-            "Local Qwen is not ready. Missing:\n"
+            "Local model is not ready. Missing:\n"
             f"{detail}\n\n"
             "On Termux, run `bash scripts/setup-qwen-termux.sh` from the Solace repo.",
         )
 
     return (
         True,
-        "Local Qwen is ready.\n"
+        "Local model is ready.\n"
         f"Model: {cfg.model}\n"
         f"Runtime: {cfg.llama_cli}\n"
         f"Context: {cfg.context} | Threads: {cfg.threads} | Max tokens: {cfg.max_tokens}",
@@ -89,7 +93,7 @@ def build_command(
     prompt: Optional[str] = None,
     *,
     interactive: bool = False,
-    settings: Optional[QwenSettings] = None,
+    settings: Optional[LocalModelSettings] = None,
 ) -> list[str]:
     """Return the llama.cpp argv for local Qwen without invoking a shell."""
 
@@ -113,13 +117,13 @@ def build_command(
     return command
 
 
-def run_qwen(
+def run_local_model(
     prompt: Optional[str] = None,
     *,
     interactive: bool = False,
-    settings: Optional[QwenSettings] = None,
+    settings: Optional[LocalModelSettings] = None,
 ) -> int:
-    """Run Qwen locally and return llama.cpp's exit status."""
+    """Run the configured GGUF model locally and return llama.cpp's status."""
 
     cfg = settings or settings_from_environment()
     ready, message = runtime_status(cfg)
@@ -135,11 +139,16 @@ def run_qwen(
     return int(result.returncode)
 
 
+run_qwen = run_local_model
+
+
 __all__: Sequence[str] = (
     "DEFAULT_LLAMA_CLI",
     "DEFAULT_QWEN_MODEL",
+    "LocalModelSettings",
     "QwenSettings",
     "build_command",
+    "run_local_model",
     "run_qwen",
     "runtime_status",
     "settings_from_environment",
