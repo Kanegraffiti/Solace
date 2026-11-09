@@ -21,6 +21,7 @@ from rich.table import Table
 import journal
 import trainer
 from solace import sync as sync_service
+from solace.bash_task import BashTaskError, execute_bash_task, plan_bash_task
 from solace.configuration import (
     CONFIG_PATH,
     ensure_storage_dirs,
@@ -592,6 +593,7 @@ def _handle_help(_: str) -> None:
     table.add_row("/debug <error>", "Match common Bash errors to likely fixes")
     table.add_row("/explain [bash] <command>", "Explain Bash command tokens and flags")
     table.add_row("/bash check <command|path>", "Validate Bash syntax without executing it")
+    table.add_row("/bash do <task>", "Plan, check, approve, and run a supported terminal task")
     table.add_row("/bash benchmark device", "Run private, non-destructive Termux acceptance checks")
     table.add_row("/toolkit [status|list|man|run]", "Discover and use an installed Termux Toolkit")
     table.add_row("/mimic", "Generate a rule-based conversation reply")
@@ -656,6 +658,57 @@ def _handle_explain(args: str) -> None:
 
 def _handle_bash(args: str) -> None:
     action, _, value = args.strip().partition(" ")
+    if action.lower() == "do":
+        if not value.strip():
+            console.print(
+                "[yellow]Usage: /bash do <task>\n"
+                "Examples: find invoice, list downloads, inspect zip archive.zip, git status project, "
+                "show process python, download https://…, backup folder, run script script.sh[/]"
+            )
+            return
+        try:
+            plan = plan_bash_task(value)
+        except (BashTaskError, OSError, RuntimeError, ValueError) as exc:
+            console.print(f"[red]Terminal task stopped:[/] {exc}")
+            return
+        warnings = "\n".join("- " + warning for warning in plan.check.safety) or "None detected."
+        console.print(
+            Panel(
+                "Request: {}\n\nCommand: {}\nDirectory: {}\nEffect: {}\nRisk: {}\n"
+                "Syntax: VALID\nSafety warnings:\n{}".format(
+                    plan.request,
+                    plan.command,
+                    plan.cwd,
+                    plan.effect,
+                    plan.risk,
+                    warnings,
+                ),
+                title="Terminal task approval required",
+                border_style="yellow",
+            )
+        )
+        if PROMPT_DEFAULTS_ONLY:
+            console.print("[yellow]Scripted mode will not approve terminal execution.[/]")
+            return
+        if not Confirm.ask("Run this exact command?", default=False):
+            console.print("[yellow]Terminal task declined. Nothing was run.[/]")
+            return
+        try:
+            task_result = execute_bash_task(plan)
+        except (BashTaskError, OSError, ValueError) as exc:
+            console.print(f"[red]Terminal task failed:[/] {exc}")
+            return
+        output = task_result.output or "(command produced no output)"
+        style = "green" if task_result.returncode == 0 else "red"
+        console.print(
+            Panel(
+                "Exit status: {}\n\n{}".format(task_result.returncode, output),
+                title="Terminal task complete" if task_result.returncode == 0 else "Terminal task failed",
+                border_style=style,
+            )
+        )
+        _log_event("bash-do", plan.request[:80])
+        return
     if action.lower() == "benchmark" and value.strip().lower() == "device":
         try:
             report = run_device_benchmark()
@@ -676,7 +729,10 @@ def _handle_bash(args: str) -> None:
         console.print(Panel("\n".join(lines), title="Bash device benchmark"))
         return
     if action.lower() != "check" or not value.strip():
-        console.print("[yellow]Usage: /bash check <command-or-script-path> | /bash benchmark device[/]")
+        console.print(
+            "[yellow]Usage: /bash check <command-or-script-path> | "
+            "/bash do <task> | /bash benchmark device[/]"
+        )
         return
     try:
         result = bash_intel.check_bash(value)

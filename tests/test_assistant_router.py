@@ -11,6 +11,7 @@ from solace.assistant_router import route_request
         ("inspect my website project", "do"),
         ("make an Excel formula for totals", "excel"),
         ("explain Bash pipes", "ask"),
+        ("terminal do git status project", "bash"),
         ("search my journal memories for Lagos", "search"),
     ],
 )

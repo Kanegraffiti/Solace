@@ -20,6 +20,7 @@ MANUAL_TEXT = """[bold]The tiny Solace manual[/bold]
 • /grammar <text> → correct English locally and explain every change.
 • /search <query> → find journal memories.
 • /code bash <topic> → get a deterministic Bash recipe.
+• /bash do <task> → preview, check and approve a supported terminal job.
 • /help → see every Solace command.
 
 File-changing actions ask first. /file delete moves items to Solace Trash, not rm.

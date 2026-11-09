@@ -53,6 +53,11 @@ def route_request(request: str) -> AssistantRoute:
     if _contains(lower, {"excel", "spreadsheet", "workbook", "formula", "pivot"}):
         return AssistantRoute("deterministic", "excel", clean, "offline spreadsheet tools")
 
+    terminal_do = re.match(r"^(?:please\s+)?(?:bash|terminal)\s+(?:do\s+)?(.+)$", clean, re.IGNORECASE)
+    if terminal_do:
+        return AssistantRoute(
+            "deterministic", "bash", "do " + terminal_do.group(1).strip(), "checked terminal task"
+        )
     if lower.startswith(("check bash ", "validate bash ")):
         command = clean.split(" ", 2)[2]
         return AssistantRoute("deterministic", "bash", f"check {command}", "Bash syntax checking")
